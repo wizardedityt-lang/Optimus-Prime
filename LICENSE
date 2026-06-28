@@ -336,7 +336,6 @@ RunService.RenderStepped:Connect(function(dt)
 	
 	if hrp and speedLabel then 
 		speedLabel.Text=string.format("Speed: %.1f",Vector3.new(hrp.Velocity.X,0,hrp.Velocity.Z).Magnitude) 
-		-- ESP Aktifken Normal Hız Yazısını Gizle (Çift Yazı Üst Üste Binmesin Diye)
 		if PlayerESP and PlayerESP.enabled then
 			speedLabel.Visible = false
 		else
@@ -394,7 +393,6 @@ end)
 
 local function setupSpeedIndicator(char)
 	local head=char:WaitForChild("Head",5);if not head then return end
-	-- Instant Reset Ghost Bug Fix: Eğer reset atıp beklerken yeni char gelmişse eskisini atla
 	if LP.Character ~= char then return end
 
 	for _, child in ipairs(safeContainer:GetChildren()) do
@@ -1310,15 +1308,17 @@ local function buildGui()
 	gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling  
 	pcall(function() if syn and syn.protect_gui then syn.protect_gui(gui) end end)
 	if not pcall(function() gui.Parent=game:GetService("CoreGui") end) then gui.Parent=LP:WaitForChild("PlayerGui") end
+	
+	-- GUI Büyüklüğü Mobil İçin Küçültüldü
 	local main=Instance.new("Frame",gui)
 	main.AnchorPoint=Vector2.new(0.5, 0.5)  
-	main.Size=UDim2.new(0, 480, 0, 520)     
+	main.Size=UDim2.new(0, 400, 0, 440)     
 	main.Position=UDim2.new(0.5, 0, 0.5, 0)
 	main.BackgroundColor3=Color3.fromRGB(0, 0, 0);main.BorderSizePixel=0;main.ClipsDescendants=true
-	Instance.new("UICorner",main).CornerRadius=UDim.new(0,30)
+	Instance.new("UICorner",main).CornerRadius=UDim.new(0,24)
 	local panelBg = Instance.new("Frame", main)
 	panelBg.Name = "PanelBg"; panelBg.Size = UDim2.new(1, 0, 1, 0); panelBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0); panelBg.BorderSizePixel = 0; panelBg.ZIndex = 1
-	Instance.new("UICorner", panelBg).CornerRadius = UDim.new(0, 30)
+	Instance.new("UICorner", panelBg).CornerRadius = UDim.new(0, 24)
 	local panelScrim = Instance.new("Frame", main)
 	panelScrim.Name = "PanelScrim";panelScrim.Size=UDim2.new(1,0,1,0);panelScrim.BackgroundTransparency=1;panelScrim.ZIndex=2
 	local mainStroke=Instance.new("UIStroke",main)
@@ -1347,7 +1347,8 @@ local function buildGui()
 	end
 	drag(main)
 	
-	local SIDEBAR_W = 195
+	-- Sidebar Küçültüldü
+	local SIDEBAR_W = 140
 	local MENU_GAP = 0 
 	local CONTENT_OVERLAP = 8  
 	local sidebar = Instance.new("Frame", main)
@@ -1357,7 +1358,7 @@ local function buildGui()
 	sidebar.BorderSizePixel = 0
 	sidebar.ZIndex = 3
 	sidebar.ClipsDescendants = true
-	Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 30)
+	Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 24)
 
 	local sidebarCanvas = Instance.new("CanvasGroup", sidebar)
 	sidebarCanvas.Name = "SidebarCanvas"
@@ -1367,7 +1368,7 @@ local function buildGui()
 	sidebarCanvas.BackgroundTransparency = 0
 	sidebarCanvas.BorderSizePixel = 0
 	sidebarCanvas.ZIndex = 1
-	Instance.new("UICorner", sidebarCanvas).CornerRadius = UDim.new(0, 30)
+	Instance.new("UICorner", sidebarCanvas).CornerRadius = UDim.new(0, 24)
 
 	local sidebarImg = Instance.new("ImageLabel", sidebarCanvas)
 	sidebarImg.Name = "SidebarArt"
@@ -1392,9 +1393,9 @@ local function buildGui()
 	sidebarScrim.BackgroundTransparency = 0.92
 	sidebarScrim.BorderSizePixel = 0
 	sidebarScrim.ZIndex = 3
-	local sidebarDiv = Instance.new("Frame", main); sidebarDiv.Size=UDim2.new(0,0,0,0); sidebarDiv.Visible=false; sidebarDiv.ZIndex=0
+	
 	local statsBg = Instance.new("Frame", sidebar)
-	statsBg.Size = UDim2.new(0, 96, 0, 20)
+	statsBg.Size = UDim2.new(0, 86, 0, 18)
 	statsBg.Position = UDim2.new(0, 8, 0, 8)
 	statsBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	statsBg.BackgroundTransparency = 0
@@ -1403,38 +1404,31 @@ local function buildGui()
 	Instance.new("UICorner", statsBg).CornerRadius = UDim.new(0, 6)
 	local statsLbl = Instance.new("TextLabel", sidebar)
 	statsLbl.Size = UDim2.new(1, -16, 0, 16)
-	statsLbl.Position = UDim2.new(0, 12, 0, 11)
+	statsLbl.Position = UDim2.new(0, 12, 0, 9)
 	statsLbl.BackgroundTransparency = 1
 	statsLbl.Text = "FPS: -- | PING: --"
 	statsLbl.TextColor3 = THEME_ACCENT
 	statsLbl.Font = Enum.Font.GothamBold
-	statsLbl.TextSize = 10
+	statsLbl.TextSize = 9
 	statsLbl.TextXAlignment = Enum.TextXAlignment.Left
 	statsLbl.ZIndex = 5
-	statsLbl.BackgroundTransparency = 1
 	trackTheme(function(c) statsLbl.TextColor3 = c end)
-	local statsLine = Instance.new("Frame", sidebar)
-	statsLine.Size = UDim2.new(0, 42, 0, 1)
-	statsLine.Position = UDim2.new(0, 12, 0, 29)
-	statsLine.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-	statsLine.BackgroundTransparency = 0.15
-	statsLine.BorderSizePixel = 0
-	statsLine.ZIndex = 5
-	trackTheme(function(c) statsLine.BackgroundColor3 = c end)
+	
 	local tabContainer = Instance.new("Frame", sidebar)
-	tabContainer.Size = UDim2.new(0, 122, 0, 226)  
+	tabContainer.Size = UDim2.new(0, 100, 0, 200)  
 	tabContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-	tabContainer.Position = UDim2.new(0.50, 0, 0.54, 0) 
+	tabContainer.Position = UDim2.new(0.50, 0, 0.50, 0) 
 	tabContainer.BackgroundTransparency = 1
 	tabContainer.ZIndex = 4
 	local tabLayout = Instance.new("UIListLayout", tabContainer)
 	tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	tabLayout.Padding = UDim.new(0, 40)
+	tabLayout.Padding = UDim.new(0, 30)
 	tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	
 	local brandFrame = Instance.new("Frame", sidebar)
-	brandFrame.Size = UDim2.new(1, -24, 0, 54)
-	brandFrame.Position = UDim2.new(0, 12, 1, -58)
+	brandFrame.Size = UDim2.new(1, -24, 0, 45)
+	brandFrame.Position = UDim2.new(0, 12, 1, -50)
 	brandFrame.BackgroundTransparency = 1
 	brandFrame.ZIndex = 5
 	local brandTitle = Instance.new("TextLabel", brandFrame)
@@ -1444,12 +1438,12 @@ local function buildGui()
 	brandTitle.Text = "OPTIMUS PRIME"
 	brandTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 	brandTitle.Font = Enum.Font.GothamBold
-	brandTitle.TextSize = 13
+	brandTitle.TextSize = 11
 	brandTitle.TextXAlignment = Enum.TextXAlignment.Left
 	brandTitle.ZIndex = 6
 	local brandSub = Instance.new("TextLabel", brandFrame)
 	brandSub.Size = UDim2.new(1, 0, 0, 10)
-	brandSub.Position = UDim2.new(0, 0, 0, 34)
+	brandSub.Position = UDim2.new(0, 0, 0, 28)
 	brandSub.BackgroundTransparency = 1
 	brandSub.Text = "by Optimus"
 	brandSub.TextColor3 = Color3.fromRGB(155, 155, 155)
@@ -1457,36 +1451,23 @@ local function buildGui()
 	brandSub.TextSize = 7
 	brandSub.TextXAlignment = Enum.TextXAlignment.Left
 	brandSub.ZIndex = 6
-	local brandLine = Instance.new("Frame", brandFrame)
-	brandLine.Size = UDim2.new(0, 84, 0, 2)
-	brandLine.Position = UDim2.new(0, 0, 0, 24)
-	brandLine.BackgroundColor3 = THEME_ACCENT
-	brandLine.BorderSizePixel = 0
-	brandLine.ZIndex = 6
-	Instance.new("UICorner", brandLine).CornerRadius = UDim.new(1, 0)
-	trackTheme(function(c) brandLine.BackgroundColor3 = c end)
+	
 	local closeBtn = Instance.new("TextButton", main)
-	closeBtn.Size = UDim2.new(0, 24, 0, 24)
-	closeBtn.Position = UDim2.new(1, -34, 0, 16)  
+	closeBtn.Size = UDim2.new(0, 22, 0, 22)
+	closeBtn.Position = UDim2.new(1, -30, 0, 12)  
 	closeBtn.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
 	closeBtn.BackgroundTransparency = 0.15
 	closeBtn.BorderSizePixel = 0
 	closeBtn.Text = "-";closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-	closeBtn.Font = Enum.Font.GothamBold;closeBtn.TextSize = 18
+	closeBtn.Font = Enum.Font.GothamBold;closeBtn.TextSize = 16
 	closeBtn.AutoButtonColor = false
 	closeBtn.ZIndex = 10
-	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
+	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 	local closeStroke = Instance.new("UIStroke", closeBtn)
 	closeStroke.Color = THEME_ACCENT; closeStroke.Thickness = 1; closeStroke.Transparency = 0.45
 	trackTheme(function(c) closeStroke.Color = c end)
-	closeBtn.MouseEnter:Connect(function()
-		TS:Create(closeBtn,TweenInfo.new(0.1),{TextColor3=Color3.fromRGB(0,0,0),BackgroundColor3=THEME_ACCENT_BRIGHT,BackgroundTransparency=0}):Play()
-		TS:Create(closeStroke,TweenInfo.new(0.1),{Transparency=0.15}):Play()
-	end)
-	closeBtn.MouseLeave:Connect(function()
-		TS:Create(closeBtn,TweenInfo.new(0.1),{TextColor3=Color3.fromRGB(200,200,200),BackgroundColor3=Color3.fromRGB(14,14,14),BackgroundTransparency=0.15}):Play()
-		TS:Create(closeStroke,TweenInfo.new(0.1),{Transparency=0.45}):Play()
-	end)
+	closeBtn.MouseButton1Click:Connect(function() main.Visible = false end)
+	
 	task.spawn(function()
 		local lastFrame = tick()
 		local fpsSamples = {}; local fpsAvg = 60
@@ -1509,21 +1490,7 @@ local function buildGui()
 			task.wait(0.5)
 		end
 	end)
-	local miniBtn=Instance.new("TextButton",gui)
-	miniBtn.Size=UDim2.new(0,118,0,30);miniBtn.Position=UDim2.new(1,-144,0,26)
-	miniBtn.BackgroundColor3=Color3.fromRGB(14, 14, 14);miniBtn.BorderSizePixel=0
-	miniBtn.Text="Optimus Prime";miniBtn.TextColor3=THEME_ACCENT;miniBtn.Font=Enum.Font.GothamBold;miniBtn.TextSize=12
-	miniBtn.ZIndex=20;miniBtn.Visible=false
-	Instance.new("UICorner",miniBtn).CornerRadius=UDim.new(0,8)
-	local miniStroke=Instance.new("UIStroke",miniBtn);miniStroke.Color=THEME_ACCENT;miniStroke.Thickness=1.2;miniStroke.Transparency=0.4
-	trackTheme(function(c) miniBtn.TextColor3 = c; miniStroke.Color = c end)
-	drag(miniBtn)
-	miniBtn.MouseEnter:Connect(function() TS:Create(miniBtn,TweenInfo.new(0.1),{BackgroundColor3=Color3.fromRGB(24, 24, 24)}):Play() end)
-	miniBtn.MouseLeave:Connect(function() TS:Create(miniBtn,TweenInfo.new(0.1),{BackgroundColor3=Color3.fromRGB(14, 14, 14)}):Play() end)
-	local function showGui() main.Visible=true;miniBtn.Visible=false end
-	local function hideGui() main.Visible=false;miniBtn.Visible=true end
-	closeBtn.MouseButton1Click:Connect(hideGui)
-	miniBtn.MouseButton1Click:Connect(showGui)
+	
 	local contentArea = Instance.new("Frame", main)
 	contentArea.Size = UDim2.new(1, -((SIDEBAR_W - CONTENT_OVERLAP) + MENU_GAP), 1, 0)
 	contentArea.Position = UDim2.new(0, (SIDEBAR_W - CONTENT_OVERLAP) + MENU_GAP, 0, 0) 
@@ -1531,37 +1498,17 @@ local function buildGui()
 	contentArea.BorderSizePixel = 0
 	contentArea.ClipsDescendants = true
 	contentArea.ZIndex = 2
-	Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 26)
+	Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 20)
 	local contentSt = Instance.new("UIStroke", contentArea)
 	contentSt.Color = Color3.fromRGB(70,70,70); contentSt.Thickness = 1; contentSt.Transparency = 0.18
-	contentSt.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	trackTheme(function(c) contentSt.Color = c end)
-	local splitCover = Instance.new("Frame", main)
-	splitCover.Name = "SplitCover"
-	splitCover.Size = UDim2.new(0, 4, 1, 0)
-	splitCover.Position = UDim2.new(0, SIDEBAR_W - 1, 0, 0)
-	splitCover.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
-	splitCover.BorderSizePixel = 0
-	splitCover.ZIndex = 1
-	local topTabs = tabContainer  
-	local tabBar = Instance.new("Frame", main)
-	tabBar.Visible = false; tabBar.Size = UDim2.new(0, 0, 0, 0); tabBar.BorderSizePixel = 0; tabBar.ZIndex = 1
-	local sf = contentArea
-	local tabButtons = {}
-	local tabPages = {}
-	local currentTab = nil
-	local function switchTab(name)
-		currentTab = name
-		for tn, pg in pairs(tabPages) do pg.Visible = (tn == name) end
-	end
+	
 	local pageHolder = Instance.new("Frame", contentArea)
-	pageHolder.Size = UDim2.new(1, -10, 1, -18)
-	pageHolder.Position = UDim2.new(0, 5, 0, 9)
+	pageHolder.Size = UDim2.new(1, -10, 1, -14)
+	pageHolder.Position = UDim2.new(0, 5, 0, 7)
 	pageHolder.BackgroundTransparency = 1
 	pageHolder.BorderSizePixel = 0
 	pageHolder.ZIndex = 3
-	local topTabsLine = Instance.new("Frame", contentArea)  
-	topTabsLine.Visible = false; topTabsLine.Size = UDim2.new(0, 0, 0, 0); topTabsLine.ZIndex = 1
+	
 	local function buildPage()
 		local p = Instance.new("ScrollingFrame", pageHolder)
 		p.Size = UDim2.new(1, -2, 1, 0)
@@ -1570,70 +1517,46 @@ local function buildGui()
 		p.BorderSizePixel = 0
 		p.ClipsDescendants = true
 		p.ScrollBarThickness = 0
-		p.ScrollBarImageColor3 = THEME_ACCENT
-		p.ScrollBarImageTransparency = 0.5
 		p.CanvasSize = UDim2.new(0, 0, 0, 0)
 		p.AutomaticCanvasSize = Enum.AutomaticSize.Y
 		p.ZIndex = 4
-		trackTheme(function(c) p.ScrollBarImageColor3 = c end)
-		local ll = Instance.new("UIListLayout", p); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0, 7)
+		local ll = Instance.new("UIListLayout", p); ll.SortOrder = Enum.SortOrder.LayoutOrder; ll.Padding = UDim.new(0, 5)
 		local pd = Instance.new("UIPadding", p)
-		pd.PaddingLeft = UDim.new(0, 8); pd.PaddingRight = UDim.new(0, 8)
-		pd.PaddingTop = UDim.new(0, 8); pd.PaddingBottom = UDim.new(0, 16)
+		pd.PaddingLeft = UDim.new(0, 6); pd.PaddingRight = UDim.new(0, 6)
+		pd.PaddingTop = UDim.new(0, 6); pd.PaddingBottom = UDim.new(0, 12)
 		return p
 	end
+	
 	local mainPage = buildPage()
 	local otherPage = buildPage(); otherPage.Visible = false
 	local configPage = buildPage(); configPage.Visible = false
-	sf = mainPage  
+	local sf = mainPage  
 	local activePage = mainPage
+	
 	local function makeTopTab(label, idx, page)
 		local b = Instance.new("TextButton", tabContainer)
-		b.Size = UDim2.new(1, 0, 0, 43)
+		b.Size = UDim2.new(1, 0, 0, 38)
 		b.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 		b.BackgroundTransparency = 0.46  
 		b.BorderSizePixel = 0
-		b.Text = label:sub(1,1) .. label:sub(2):lower()
+		b.Text = label
 		b.TextColor3 = Color3.fromRGB(245, 245, 245)
 		b.Font = Enum.Font.GothamBold
-		b.TextSize = 12
+		b.TextSize = 10
 		b.AutoButtonColor = false
 		b.LayoutOrder = idx
 		b.ZIndex = 5
-		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 14)
+		Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
 		local s = Instance.new("UIStroke", b)
 		s.Color = Color3.fromRGB(88,88,88); s.Thickness = 1; s.Transparency = 0.35
-		s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-		b.MouseEnter:Connect(function()
-			if activePage ~= page then
-				TS:Create(b, TweenInfo.new(0.12), {
-					BackgroundTransparency = 0.12,
-					BackgroundColor3 = Color3.fromRGB(210, 210, 210),
-					TextColor3 = Color3.fromRGB(0, 0, 0),
-				}):Play()
-			end
-		end)
-		b.MouseLeave:Connect(function()
-			if activePage ~= page then
-				TS:Create(b, TweenInfo.new(0.12), {
-					BackgroundTransparency = 0.46,
-					BackgroundColor3 = Color3.fromRGB(18, 18, 18),
-					TextColor3 = Color3.fromRGB(245, 245, 245),
-				}):Play()
-			end
-		end)
-		local underline = Instance.new("Frame", b)
-		underline.Size = UDim2.new(0, 0, 0, 0); underline.BackgroundTransparency = 1
-		return b, underline
+		return b
 	end
-	local btnMain,   ulMain   = makeTopTab("MAIN",   1, mainPage)
-	local btnOther,  ulOther  = makeTopTab("OTHER",  2, otherPage)
-	local btnConfig, ulConfig = makeTopTab("CONFIG", 3, configPage)
-	local allTabs = {
-		{btn=btnMain,   ul=ulMain,   page=mainPage},
-		{btn=btnOther,  ul=ulOther,  page=otherPage},
-		{btn=btnConfig, ul=ulConfig, page=configPage},
-	}
+	
+	local btnMain = makeTopTab("Main", 1, mainPage)
+	local btnOther = makeTopTab("Other", 2, otherPage)
+	local btnConfig = makeTopTab("Config", 3, configPage)
+	local allTabs = {{btn=btnMain, page=mainPage}, {btn=btnOther, page=otherPage}, {btn=btnConfig, page=configPage}}
+	
 	local function setActivePage(p)
 		activePage = p
 		for _, t in ipairs(allTabs) do
@@ -1644,230 +1567,143 @@ local function buildGui()
 				BackgroundTransparency = isActive and 0 or 0.46,  
 				TextColor3 = isActive and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(245, 245, 245),
 			}):Play()
-			local st = t.btn:FindFirstChildWhichIsA("UIStroke")
-			if st then
-				TS:Create(st, TweenInfo.new(0.22), {
-					Color = isActive and Color3.fromRGB(225, 225, 225) or Color3.fromRGB(120, 120, 120),
-					Transparency = isActive and 0.2 or 0.5,
-				}):Play()
-			end
 		end
 	end
-	btnMain.BackgroundColor3 = ACTIVE_TAB; btnMain.BackgroundTransparency = 0; btnMain.TextColor3 = Color3.fromRGB(0, 0, 0)
-	do
-		local st = btnMain:FindFirstChildWhichIsA("UIStroke")
-		if st then st.Color = Color3.fromRGB(225, 225, 225); st.Transparency = 0.2 end
-	end
-	trackTheme(function(_) setActivePage(activePage) end)
-	btnMain.MouseButton1Click:Connect(function()   setActivePage(mainPage)   end)
-	btnOther.MouseButton1Click:Connect(function()  setActivePage(otherPage)  end)
+	setActivePage(mainPage)
+	btnMain.MouseButton1Click:Connect(function() setActivePage(mainPage) end)
+	btnOther.MouseButton1Click:Connect(function() setActivePage(otherPage) end)
 	btnConfig.MouseButton1Click:Connect(function() setActivePage(configPage) end)
 	
 	local SECTION_TO_PAGE = {
 		Speed = mainPage, Combat = mainPage, Mechanics = mainPage, Misc = mainPage,
 		Movement = otherPage, Teleport = otherPage, ["Desync Aimbot"] = otherPage, ["Other Visuals"] = otherPage,
-		Steal = configPage, Visual = configPage, Display = configPage, Interface = configPage, Config = configPage,
-		["Grab Radius"] = configPage, ["Steal Duration"] = configPage,
+		Steal = configPage, Visual = configPage, Interface = configPage, Config = configPage,
 	}
-	local tabOrder = 0
+	
 	local lo = 0
 	local function LO() lo = lo + 1; return lo end
 	local function mkSect(txt)
-		tabOrder = tabOrder + 1
 		local targetPage = SECTION_TO_PAGE[txt] or mainPage
 		sf = targetPage
-		tabPages[txt] = targetPage
 		local f = Instance.new("Frame", targetPage)
-		f.Size = UDim2.new(1, 0, 0, 26); f.BackgroundTransparency = 1
-		f.BorderSizePixel = 0; f.LayoutOrder = LO(); f.ZIndex = 6
+		f.Size = UDim2.new(1, 0, 0, 22); f.BackgroundTransparency = 1; f.LayoutOrder = LO()
 		local dot = Instance.new("Frame", f)
-		dot.Size = UDim2.new(0, 3, 0, 22); dot.Position = UDim2.new(0, 5, 0.5, -11)
-		dot.BackgroundColor3 = THEME_ACCENT; dot.BorderSizePixel = 0; dot.ZIndex = 8
-		Instance.new("UICorner", dot).CornerRadius = UDim.new(0, 3)
+		dot.Size = UDim2.new(0, 3, 0, 18); dot.Position = UDim2.new(0, 4, 0.5, -9)
+		dot.BackgroundColor3 = THEME_ACCENT; Instance.new("UICorner", dot).CornerRadius = UDim.new(0, 3)
 		local l = Instance.new("TextLabel", f)
-		l.Size = UDim2.new(1, -22, 1, 0); l.Position = UDim2.new(0, 19, 0, 0)
+		l.Size = UDim2.new(1, -20, 1, 0); l.Position = UDim2.new(0, 16, 0, 0)
 		l.BackgroundTransparency = 1; l.Text = txt:upper(); l.TextColor3 = THEME_ACCENT
-		l.Font = Enum.Font.GothamBold; l.TextSize = 11
-		l.TextXAlignment = Enum.TextXAlignment.Left
-		l.ZIndex = 9
+		l.Font = Enum.Font.GothamBold; l.TextSize = 10; l.TextXAlignment = Enum.TextXAlignment.Left
 		trackTheme(function(c) dot.BackgroundColor3 = c; l.TextColor3 = c end)
 	end
+	
 	local function mkRow(h)
-		local f=Instance.new("Frame",sf);f.Size=UDim2.new(1,-2,0,h or 40)  
+		local f=Instance.new("Frame",sf);f.Size=UDim2.new(1,-2,0,h or 36)  
 		f.BackgroundColor3=Color3.fromRGB(0, 0, 0);f.BorderSizePixel=0;f.LayoutOrder=LO()  
-		f.ZIndex=6
-		Instance.new("UICorner",f).CornerRadius=UDim.new(0,10)  
+		Instance.new("UICorner",f).CornerRadius=UDim.new(0,8)  
 		local rs=Instance.new("UIStroke",f); rs.Color=Color3.fromRGB(75, 75, 75); rs.Thickness=1; rs.Transparency=0.22  
-		f.MouseEnter:Connect(function() TS:Create(f,TweenInfo.new(0.08),{BackgroundColor3=Color3.fromRGB(12, 12, 12)}):Play() end)
-		f.MouseLeave:Connect(function() TS:Create(f,TweenInfo.new(0.08),{BackgroundColor3=Color3.fromRGB(0, 0, 0)}):Play() end)
 		return f
 	end
 	local function mkLabel(row,txt)
-		local l=Instance.new("TextLabel",row);l.Size=UDim2.new(0.58,0,1,0);l.Position=UDim2.new(0,11,0,0)
+		local l=Instance.new("TextLabel",row);l.Size=UDim2.new(0.58,0,1,0);l.Position=UDim2.new(0,10,0,0)
 		l.BackgroundTransparency=1;l.Text=txt;l.TextColor3=W
-		l.Font=Enum.Font.GothamBold;l.TextSize=11;l.TextXAlignment=Enum.TextXAlignment.Left
-		l.ZIndex=8
+		l.Font=Enum.Font.GothamBold;l.TextSize=10;l.TextXAlignment=Enum.TextXAlignment.Left
 	end
 	local function mkPill(row,offset)
-		local pill=Instance.new("Frame",row);pill.Size=UDim2.new(0,46,0,24)
-		pill.Position=UDim2.new(1,-(offset or 56),0.5,-12)
-		pill.BackgroundColor3=Color3.fromRGB(42, 42, 42);pill.BorderSizePixel=0;pill.ZIndex=3
-		Instance.new("UICorner",pill).CornerRadius=UDim.new(1,0)
-		local dot=Instance.new("Frame",pill);dot.Size=UDim2.new(0,18,0,18);dot.Position=UDim2.new(0,3,0.5,-9)
-		dot.BackgroundColor3=Color3.fromRGB(130, 130, 130);dot.BorderSizePixel=0;dot.ZIndex=4
-		Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
+		local pill=Instance.new("Frame",row);pill.Size=UDim2.new(0,38,0,20)
+		pill.Position=UDim2.new(1,-(offset or 48),0.5,-10)
+		pill.BackgroundColor3=Color3.fromRGB(42, 42, 42);Instance.new("UICorner",pill).CornerRadius=UDim.new(1,0)
+		local dot=Instance.new("Frame",pill);dot.Size=UDim2.new(0,14,0,14);dot.Position=UDim2.new(0,3,0.5,-7)
+		dot.BackgroundColor3=Color3.fromRGB(130, 130, 130);Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
 		return pill,dot
 	end
 	local function animPill(pill,dot,on)
-		TS:Create(pill,TweenInfo.new(0.18,Enum.EasingStyle.Quad),{BackgroundColor3=on and THEME_ACCENT or Color3.fromRGB(34, 34, 34)}):Play()
-		TS:Create(dot,TweenInfo.new(0.18,Enum.EasingStyle.Back),{
-			Position=on and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9),
-			BackgroundColor3=on and Color3.fromRGB(255,255,255) or Color3.fromRGB(130, 130, 130)
-		}):Play()
+		TS:Create(pill,TweenInfo.new(0.15),{BackgroundColor3=on and THEME_ACCENT or Color3.fromRGB(34, 34, 34)}):Play()
+		TS:Create(dot,TweenInfo.new(0.15),{Position=on and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7), BackgroundColor3=on and Color3.fromRGB(255,255,255) or Color3.fromRGB(130, 130, 130)}):Play()
 	end
 	local _trackedPills = {}  
 	trackTheme(function(_) for _,t in ipairs(_trackedPills) do if t.getState() then animPill(t.pill, t.dot, true) end end end)
+	
 	local function mkToggle(txt,cb)
-		local row=mkRow(40);mkLabel(row,txt)
-		local pill,dot=mkPill(row,56)
+		local row=mkRow(36);mkLabel(row,txt)
+		local pill,dot=mkPill(row,48)
 		local on=false
 		local function sv(s) on=s;animPill(pill,dot,s) end
 		table.insert(_trackedPills, {pill=pill, dot=dot, getState=function() return on end})
-		local clk=Instance.new("TextButton",pill);clk.Size=UDim2.new(1,0,1,0);clk.BackgroundTransparency=1;clk.Text="";clk.ZIndex=5
-		clk.Activated:Connect(function()
-			on=not on;sv(on)
-			pcall(cb, on)
-			pcall(saveConfig)  
-		end)
-		pill.ZIndex=3;dot.ZIndex=4
+		local clk=Instance.new("TextButton",pill);clk.Size=UDim2.new(1,0,1,0);clk.BackgroundTransparency=1;clk.Text=""
+		clk.Activated:Connect(function() on=not on;sv(on);pcall(cb, on);pcall(saveConfig) end)
 		return sv
 	end
+	
 	local function mkBox(parent,default,w,xOff,cb)
 		local tb=Instance.new("TextBox",parent)
-		local bw = w or 74
-		local xo = math.max(xOff or 78, bw + 8)
-		tb.Size=UDim2.new(0,bw,0,26);tb.Position=UDim2.new(1,-xo,0.5,-13)
-		tb.BackgroundColor3=Color3.fromRGB(12, 12, 12);tb.BorderSizePixel=0;tb.Text=tostring(default);tb.TextColor3=THEME_ACCENT
-		tb.Font=Enum.Font.GothamBold;tb.TextSize=11;tb.ClearTextOnFocus=false;tb.ZIndex=5
-		Instance.new("UICorner",tb).CornerRadius=UDim.new(0,7)
+		tb.Size=UDim2.new(0,w or 60,0,22);tb.Position=UDim2.new(1,-(xOff or 70),0.5,-11)
+		tb.BackgroundColor3=Color3.fromRGB(12, 12, 12);tb.Text=tostring(default);tb.TextColor3=THEME_ACCENT
+		tb.Font=Enum.Font.GothamBold;tb.TextSize=10;Instance.new("UICorner",tb).CornerRadius=UDim.new(0,6)
 		local bs=Instance.new("UIStroke",tb);bs.Color=Color3.fromRGB(80, 80, 80);bs.Thickness=1;bs.Transparency=0.28
-		tb.Focused:Connect(function() TS:Create(bs,TweenInfo.new(0.12),{Color=THEME_ACCENT,Transparency=0}):Play() end)
-		tb.FocusLost:Connect(function()
-			TS:Create(bs,TweenInfo.new(0.12),{Color=Color3.fromRGB(80, 80, 80),Transparency=0.28}):Play()
-			if cb then local n=tonumber(tb.Text);if n then cb(n) else tb.Text=tostring(default) end end
-			pcall(saveConfig)  
-		end)
+		tb.FocusLost:Connect(function() if cb then local n=tonumber(tb.Text);if n then cb(n) else tb.Text=tostring(default) end end;pcall(saveConfig) end)
 		return tb
 	end
 	local function mkActionBtn(parent, text, cb)
 		local btn=Instance.new("TextButton",parent)
-		btn.Size=UDim2.new(0,70,0,26);btn.Position=UDim2.new(1,-78,0.5,-13)
-		btn.BackgroundColor3=Color3.fromRGB(12, 12, 12);btn.BorderSizePixel=0
-		btn.Text=text;btn.TextColor3=THEME_ACCENT
-		btn.Font=Enum.Font.GothamBold;btn.TextSize=11;btn.ZIndex=5
-		Instance.new("UICorner",btn).CornerRadius=UDim.new(0,7)
-		local kbSt=Instance.new("UIStroke",btn);kbSt.Color=Color3.fromRGB(80, 80, 80);kbSt.Thickness=1;kbSt.Transparency=0.28
+		btn.Size=UDim2.new(0,64,0,22);btn.Position=UDim2.new(1,-74,0.5,-11)
+		btn.BackgroundColor3=Color3.fromRGB(12, 12, 12);btn.Text=text;btn.TextColor3=THEME_ACCENT
+		btn.Font=Enum.Font.GothamBold;btn.TextSize=10;Instance.new("UICorner",btn).CornerRadius=UDim.new(0,6)
+		Instance.new("UIStroke",btn).Color=Color3.fromRGB(80, 80, 80)
 		btn.Activated:Connect(cb)
 		return btn
 	end
 
+	-- Steal Bar (Mobil İçin Küçültüldü)
 	local pbFrame=Instance.new("Frame",gui)
-	pbFrame.Size=UDim2.new(0,380,0,38);pbFrame.Position=UDim2.new(0.5,-190,1,-58)
-	pbFrame.BackgroundColor3=Color3.fromRGB(0, 0, 0);pbFrame.BorderSizePixel=0;pbFrame.Active=true;pbFrame.ClipsDescendants=true
+	pbFrame.Size=UDim2.new(0,300,0,32);pbFrame.Position=UDim2.new(0.5,-150,1,-45)
+	pbFrame.BackgroundColor3=Color3.fromRGB(0, 0, 0);pbFrame.ClipsDescendants=true
 	Instance.new("UICorner",pbFrame).CornerRadius=UDim.new(1,0)
 	local pbSt=Instance.new("UIStroke",pbFrame); pbSt.Color=THEME_ACCENT; pbSt.Thickness=1.2; pbSt.Transparency=0.2
 	drag(pbFrame)
 	local fillRegion = Instance.new("Frame", pbFrame)
-	fillRegion.Size = UDim2.new(0, 220, 1, -8)
-	fillRegion.Position = UDim2.new(0, 5, 0, 4)
-	fillRegion.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-	fillRegion.BorderSizePixel = 0
-	fillRegion.ClipsDescendants = true
-	fillRegion.ZIndex = 2
+	fillRegion.Size = UDim2.new(0, 170, 1, -6); fillRegion.Position = UDim2.new(0, 4, 0, 3)
+	fillRegion.BackgroundColor3 = Color3.fromRGB(8, 8, 8); fillRegion.ClipsDescendants = true
 	Instance.new("UICorner", fillRegion).CornerRadius = UDim.new(1, 0)
-	local fillRegGradient = Instance.new("UIGradient", fillRegion)
-	fillRegGradient.Color = ColorSequence.new(Color3.fromRGB(30, 30, 30), Color3.fromRGB(14, 14, 14))
-	fillRegGradient.Rotation = 90
-	local fillRegStroke = Instance.new("UIStroke", fillRegion)
-	fillRegStroke.Color = THEME_ACCENT; fillRegStroke.Thickness = 1; fillRegStroke.Transparency = 0.6
-	trackTheme(function(c) fillRegStroke.Color = c end)
-	progressFill=Instance.new("Frame",fillRegion)
-	progressFill.Size=UDim2.new(0,0,1,0);progressFill.Position=UDim2.new(0,0,0,0)
-	progressFill.BackgroundColor3=THEME_ACCENT;progressFill.BorderSizePixel=0
-	progressFill.ZIndex=3
-	Instance.new("UICorner",progressFill).CornerRadius=UDim.new(1,0)
-	local fillGradient = Instance.new("UIGradient", progressFill)
-	fillGradient.Color = ColorSequence.new(THEME_ACCENT_BRIGHT, THEME_ACCENT_DIM)
-	fillGradient.Rotation = 90
-	trackTheme(function(c)
-		progressFill.BackgroundColor3 = c
-		fillGradient.Color = ColorSequence.new(THEME_ACCENT_BRIGHT, THEME_ACCENT_DIM)
-	end)
+	local fillRegStroke = Instance.new("UIStroke", fillRegion); fillRegStroke.Color = THEME_ACCENT; fillRegStroke.Transparency = 0.6
+	progressFill=Instance.new("Frame",fillRegion); progressFill.Size=UDim2.new(0,0,1,0); progressFill.BackgroundColor3=THEME_ACCENT
 	local stealLbl = Instance.new("TextLabel", fillRegion)
-	stealLbl.Size = UDim2.new(0, 60, 1, 0)
-	stealLbl.Position = UDim2.new(0, 12, 0, 0)
-	stealLbl.BackgroundTransparency = 1
-	stealLbl.Text = "STEAL"
-	stealLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-	stealLbl.Font = Enum.Font.GothamBlack
-	stealLbl.TextSize = 11
-	stealLbl.TextXAlignment = Enum.TextXAlignment.Left
-	stealLbl.ZIndex = 5
+	stealLbl.Size = UDim2.new(0, 60, 1, 0); stealLbl.Position = UDim2.new(0, 10, 0, 0)
+	stealLbl.BackgroundTransparency = 1; stealLbl.Text = "STEAL"; stealLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+	stealLbl.Font = Enum.Font.GothamBlack; stealLbl.TextSize = 10; stealLbl.TextXAlignment = Enum.TextXAlignment.Left
 	progressPct=Instance.new("TextLabel",fillRegion)
-	progressPct.Size=UDim2.new(0,60,1,0);progressPct.Position=UDim2.new(1,-68,0,0)
+	progressPct.Size=UDim2.new(0,60,1,0);progressPct.Position=UDim2.new(1,-65,0,0)
 	progressPct.BackgroundTransparency=1;progressPct.Text="—";progressPct.TextColor3=Color3.fromRGB(230, 230, 230)
-	progressPct.Font=Enum.Font.GothamBold;progressPct.TextSize=10
-	progressPct.TextXAlignment=Enum.TextXAlignment.Right
-	progressPct.ZIndex=5
+	progressPct.Font=Enum.Font.GothamBold;progressPct.TextSize=9;progressPct.TextXAlignment=Enum.TextXAlignment.Right
+	
 	local pbDiv = Instance.new("Frame", pbFrame)
-	pbDiv.Size = UDim2.new(0, 1, 0, 14)
-	pbDiv.Position = UDim2.new(0, 232, 0.5, -7)
-	pbDiv.BackgroundColor3 = THEME_ACCENT
-	pbDiv.BackgroundTransparency = 0.7
-	pbDiv.BorderSizePixel = 0
-	pbDiv.ZIndex = 3
-	trackTheme(function(c) pbDiv.BackgroundColor3 = c end)
+	pbDiv.Size = UDim2.new(0, 1, 0, 12); pbDiv.Position = UDim2.new(0, 180, 0.5, -6)
+	pbDiv.BackgroundColor3 = THEME_ACCENT; pbDiv.BackgroundTransparency = 0.7; pbDiv.BorderSizePixel = 0
 	progressRadLbl=Instance.new("TextLabel",pbFrame)
-	progressRadLbl.Size=UDim2.new(0,140,1,0);progressRadLbl.Position=UDim2.new(0,236,0,0)
+	progressRadLbl.Size=UDim2.new(0,110,1,0);progressRadLbl.Position=UDim2.new(0,185,0,0)
 	progressRadLbl.BackgroundTransparency=1;progressRadLbl.Text="-- · --"
-	progressRadLbl.TextColor3=Color3.fromRGB(190, 190, 190);progressRadLbl.Font=Enum.Font.GothamBold;progressRadLbl.TextSize=10
+	progressRadLbl.TextColor3=Color3.fromRGB(190, 190, 190);progressRadLbl.Font=Enum.Font.GothamBold;progressRadLbl.TextSize=9
 	progressRadLbl.TextXAlignment=Enum.TextXAlignment.Center
-	progressRadLbl.ZIndex=4
+
 	local _pbState = "IDLE"
 	local function setBarState(state, distance)
 		if state == _pbState and state ~= "READY" then return end
 		_pbState = state
 		if state == "STEALING" then
-			TS:Create(stealLbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 			TS:Create(fillRegion, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(22, 26, 36)}):Play()
 		elseif state == "READY" then
-			TS:Create(stealLbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 			TS:Create(fillRegion, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 50, 80)}):Play()
-			if progressPct then
-				progressPct.Text = distance and (math.floor(distance).."m") or "READY"
-				progressPct.TextColor3 = Color3.fromRGB(235, 235, 235)
-			end
+			if progressPct then progressPct.Text = distance and (math.floor(distance).."m") or "READY" end
 		else  
-			TS:Create(stealLbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 150)}):Play()
 			TS:Create(fillRegion, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(22, 26, 36)}):Play()
-			if progressPct and not isStealing then
-				progressPct.Text = "—"
-				progressPct.TextColor3 = Color3.fromRGB(150, 150, 150)
-			end
+			if progressPct and not isStealing then progressPct.Text = "—" end
 		end
 	end
 	task.spawn(function()
 		while task.wait(0.25) do
-			if isStealing then
-				setBarState("STEALING")
-			else
-				local p, d = findNearestPrompt()
-				nearestPromptCache, nearestPromptDist = p, d
-				if p then
-					setBarState("READY", d)
-				else
-					setBarState("IDLE")
-				end
+			if isStealing then setBarState("STEALING") else
+				local p, d = findNearestPrompt(); nearestPromptCache, nearestPromptDist = p, d
+				if p then setBarState("READY", d) else setBarState("IDLE") end
 			end
 		end
 	end)
@@ -1876,46 +1712,40 @@ local function buildGui()
 		local fpsSamples = {}; local fpsAvg = 60
 		RunService.RenderStepped:Connect(function()
 			local now = tick(); local dt = now - lastFrame; lastFrame = now
-			if dt > 0 then
-				table.insert(fpsSamples, 1/dt)
-				if #fpsSamples > 30 then table.remove(fpsSamples, 1) end
-				local sum = 0; for _,v in ipairs(fpsSamples) do sum = sum + v end
-				fpsAvg = sum / #fpsSamples
+			if dt > 0 then table.insert(fpsSamples, 1/dt); if #fpsSamples > 30 then table.remove(fpsSamples, 1) end
+				local sum = 0; for _,v in ipairs(fpsSamples) do sum = sum + v end; fpsAvg = sum / #fpsSamples
 			end
 		end)
 		while true do
-			local ping = 0
-			pcall(function() ping = LP:GetNetworkPing() * 1000 end)
-			if progressRadLbl then
-				progressRadLbl.Text = string.format("%d FPS | %dms", math.floor(fpsAvg+0.5), math.floor(ping+0.5))
-			end
+			local ping = 0; pcall(function() ping = LP:GetNetworkPing() * 1000 end)
+			if progressRadLbl then progressRadLbl.Text = string.format("%d FPS | %dms", math.floor(fpsAvg+0.5), math.floor(ping+0.5)) end
 			task.wait(0.5)
 		end
 	end)
 	
+	-- SEKME İÇERİKLERİ
 	mkSect("Speed")
-	do local row=mkRow(40);mkLabel(row,"Normal Speed");normalBox=mkBox(row,NS,50,48,function(v) if v>0 and v<=500 then NS=v end;saveConfig() end) end
-	do local row=mkRow(40);mkLabel(row,"Carry Speed");carryBox=mkBox(row,CS,50,48,function(v) if v>0 and v<=500 then CS=v end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Normal Speed");normalBox=mkBox(row,NS,50,60,function(v) if v>0 and v<=500 then NS=v end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Carry Speed");carryBox=mkBox(row,CS,50,60,function(v) if v>0 and v<=500 then CS=v end;saveConfig() end) end
 	mkToggle("Normal Speed", function(on) normalSpeedEnabled = on; if on then laggerToggled = false end; saveConfig() end)
 	
-	do local row=mkRow(40);mkLabel(row,"Lagger Speed");laggerBox=mkBox(row,LAGGER_SPEED,50,48,function(v) if v>0 and v<=500 then LAGGER_SPEED=v end;saveConfig() end) end
-	do local row=mkRow(40);mkLabel(row,"Lagger Carry");laggerCarryBox=mkBox(row,LAGGER_CARRY_SPEED,50,48,function(v) if v>0 and v<=500 then LAGGER_CARRY_SPEED=v end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Lagger Speed");laggerBox=mkBox(row,LAGGER_SPEED,50,60,function(v) if v>0 and v<=500 then LAGGER_SPEED=v end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Lagger Carry");laggerCarryBox=mkBox(row,LAGGER_CARRY_SPEED,50,60,function(v) if v>0 and v<=500 then LAGGER_CARRY_SPEED=v end;saveConfig() end) end
 
 	mkSect("Combat")
 	do
-		local row=mkRow(40);mkLabel(row,"Auto Bat")
-		local pill,dot=mkPill(row,56); pill.ZIndex=3;dot.ZIndex=4
+		local row=mkRow(36);mkLabel(row,"Auto Bat")
+		local pill,dot=mkPill(row,48)
 		local abOn=false
 		local function svAutoBat(s) abOn=s;animPill(pill,dot,s) end
 		autoBatSetVisual=svAutoBat
-		local abClk=Instance.new("TextButton",pill);abClk.Size=UDim2.new(1,0,1,0);abClk.BackgroundTransparency=1;abClk.Text="";abClk.ZIndex=5
+		local abClk=Instance.new("TextButton",pill);abClk.Size=UDim2.new(1,0,1,0);abClk.BackgroundTransparency=1;abClk.Text=""
 		abClk.Activated:Connect(function() abOn=not abOn;svAutoBat(abOn); if abOn then queueAutoBatStart() else autoBatEnabled=false;disableAutoBat() end; saveConfig() end)
 	end
-	do local row=mkRow(40);mkLabel(row,"Aimbot Speed");mkBox(row,AUTO_BAT_SPEED,50,48,function(v) if v>0 and v<=200 then AUTO_BAT_SPEED=v end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Aimbot Speed");mkBox(row,AUTO_BAT_SPEED,50,60,function(v) if v>0 and v<=200 then AUTO_BAT_SPEED=v end;saveConfig() end) end
 	mkToggle("Disable at 180+",function(_) saveConfig() end)
 	setBatCounterVisual=mkToggle("Bat Counter",function(on) batCounterEnabled=on;if on then startBatCounter() else stopBatCounter() end;saveConfig() end)
 	setAutoSwingVisual=mkToggle("Auto Swing",function(on) autoSwingEnabled=on;saveConfig() end)
-	if setAutoSwingVisual then setAutoSwingVisual(autoSwingEnabled) end
 
 	mkSect("Mechanics")
 	setPlayerESPVisual=mkToggle("Player ESP",function(on) if on then startPlayerESP() else stopPlayerESP() end;saveConfig() end)
@@ -1926,61 +1756,49 @@ local function buildGui()
 	setMedusaVisual=mkToggle("Medusa Counter",function(on) medusaCounterEnabled=on;if on then setupMedusa(LP.Character) else stopMedusaCounter() end;saveConfig() end)
 	setUnwalkVisual=mkToggle("Unwalk",function(on) unwalkEnabled=on;if on then startUnwalk() else stopUnwalk() end;saveConfig() end)
 
-	-- YENI: No Player Collision (Movement Bölümü / Other Tab)
 	mkSect("Movement")
-	setNoCollisionVisual = mkToggle("No Player Collision", function(on)
-		toggleNoCollision(on)
-		saveConfig()
-	end)
+	setNoCollisionVisual = mkToggle("No Player Collision", function(on) toggleNoCollision(on); saveConfig() end)
 
 	mkSect("Teleport")
-	do local row=mkRow(40);mkLabel(row,"TP Down"); mkActionBtn(row, "RUN", function() runTPFloor() end) end
+	do local row=mkRow(36);mkLabel(row,"TP Down"); mkActionBtn(row, "RUN", function() runTPFloor() end) end
 	setAutoTPVisual=mkToggle("Auto TP Down",function(on) autoTPEnabled=on;if on then startAutoTP() else stopAutoTP() end;saveConfig() end)
-	do local row=mkRow(40);mkLabel(row,"TP Down Height");autoTPHeightBox=mkBox(row,autoTPHeight,50,56,function(v) if v>=0 and v<=500 then autoTPHeight=v else autoTPHeightBox.Text=tostring(autoTPHeight) end;saveConfig() end) end
-	do local row=mkRow(40);mkLabel(row,"Drop Brainrot"); mkActionBtn(row, "RUN", function() runDrop() end) end
+	do local row=mkRow(36);mkLabel(row,"TP Down Height");autoTPHeightBox=mkBox(row,autoTPHeight,50,60,function(v) if v>=0 and v<=500 then autoTPHeight=v else autoTPHeightBox.Text=tostring(autoTPHeight) end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Drop Brainrot"); mkActionBtn(row, "RUN", function() runDrop() end) end
 
 	mkSect("Desync Aimbot")
 	mkToggle("Desync Aimbot",function(_) saveConfig() end)
 
 	mkSect("Other Visuals")
-	setStretchRezVisual = mkToggle("FOV", function(on) 
-		if on then enableStretchRez() else disableStretchRez() end
-		saveConfig() 
-	end)
+	setStretchRezVisual = mkToggle("FOV", function(on) if on then enableStretchRez() else disableStretchRez() end; saveConfig() end)
 
 	mkSect("Interface")
 	setIntroVisual = mkToggle("Intro", function(on) _introEnabled = on; saveConfig() end)
-	if setIntroVisual then setIntroVisual(_introEnabled) end
 
 	mkSect("Config")
-	do local row=mkRow(40);mkLabel(row,"Grab Radius");radInput=mkBox(row,Steal.StealRadius,64,72,function(v) if v>=0.5 and v<=300 then Steal.StealRadius=v;if progressRadLbl then progressRadLbl.Text=string.format("Radius: %.2g",Steal.StealRadius) end;Steal.cachedPrompts={};Steal.promptCacheTime=0 end;saveConfig() end) end
-	do local row=mkRow(40);mkLabel(row,"Steal Duration (s)");durInput=mkBox(row,Steal.StealDuration,64,72,function(v) if v>=0.05 and v<=10 then Steal.StealDuration=v end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Grab Radius");radInput=mkBox(row,Steal.StealRadius,56,66,function(v) if v>=0.5 and v<=300 then Steal.StealRadius=v;if progressRadLbl then progressRadLbl.Text=string.format("Radius: %.2g",Steal.StealRadius) end;Steal.cachedPrompts={};Steal.promptCacheTime=0 end;saveConfig() end) end
+	do local row=mkRow(36);mkLabel(row,"Steal Duration");durInput=mkBox(row,Steal.StealDuration,56,66,function(v) if v>=0.05 and v<=10 then Steal.StealDuration=v end;saveConfig() end) end
 	do
-		local row=Instance.new("Frame",sf);row.Size=UDim2.new(1,-2,0,44);row.BackgroundTransparency=1;row.BorderSizePixel=0;row.LayoutOrder=LO();row.ZIndex=6
-		local btn=Instance.new("TextButton",row);btn.Size=UDim2.new(1,0,0,40);btn.Position=UDim2.new(0,0,0,2);btn.BackgroundColor3=THEME_ACCENT;btn.BorderSizePixel=0;btn.Text="Save Config";btn.TextColor3=Color3.fromRGB(0,0,0);btn.Font=Enum.Font.GothamBlack;btn.TextSize=12;btn.ZIndex=8;btn.AutoButtonColor=false
-		Instance.new("UICorner",btn).CornerRadius=UDim.new(0,9)
+		local row=Instance.new("Frame",sf);row.Size=UDim2.new(1,-2,0,40);row.BackgroundTransparency=1;row.LayoutOrder=LO()
+		local btn=Instance.new("TextButton",row);btn.Size=UDim2.new(1,0,0,36);btn.BackgroundColor3=THEME_ACCENT;btn.Text="Save Config";btn.TextColor3=Color3.fromRGB(0,0,0);btn.Font=Enum.Font.GothamBlack;btn.TextSize=11;Instance.new("UICorner",btn).CornerRadius=UDim.new(0,8)
 		trackTheme(function(c) btn.BackgroundColor3=c end)
 		btn.MouseButton1Click:Connect(function() saveConfig() end)
 	end
 	
+	-- MOBİL İÇİN KÜÇÜLTÜLMÜŞ YAN BUTONLAR
 	local mobileButtons = {}
 	local function makeMobileButton(key, label, onPress)
 		local btn = Instance.new("TextButton", gui)
 		btn.Name = "MB_"..key
-		btn.Size = UDim2.new(0, 76, 0, 56)                        
+		btn.Size = UDim2.new(0, 64, 0, 48)                        
 		btn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)          
-		btn.BorderSizePixel = 0
 		btn.Text = label
 		btn.TextColor3 = Color3.fromRGB(225, 225, 225)            
 		btn.Font = Enum.Font.GothamBlack
-		btn.TextSize = 11
-		btn.AutoButtonColor = false
-		btn.ZIndex = 101
-		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)  
+		btn.TextSize = 10
+		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)  
 		local stroke = Instance.new("UIStroke", btn)
 		stroke.Color = Color3.fromRGB(70, 70, 70)                
 		stroke.Thickness = 1
-		stroke.Transparency = 0.4
 		local pressing, dragging = false, false
 		local pressPos, btnStart = nil, nil
 		btn.InputBegan:Connect(function(i)
@@ -1990,9 +1808,7 @@ local function buildGui()
 		end)
 		btn.InputEnded:Connect(function(i)
 			if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-				if pressing and not dragging then
-					onPress(btn)
-				end
+				if pressing and not dragging then onPress(btn) end
 				pressing = false; dragging = false
 			end
 		end)
@@ -2000,74 +1816,52 @@ local function buildGui()
 			if not pressing then return end
 			if i.UserInputType~=Enum.UserInputType.MouseMovement and i.UserInputType~=Enum.UserInputType.Touch then return end
 			local delta = i.Position - pressPos
-			if not dragging and (math.abs(delta.X)>6 or math.abs(delta.Y)>6) then
-				dragging = true
-			end
-			if dragging then
-				btn.Position = UDim2.new(btnStart.X.Scale, btnStart.X.Offset+delta.X, btnStart.Y.Scale, btnStart.Y.Offset+delta.Y)
-			end
+			if not dragging and (math.abs(delta.X)>6 or math.abs(delta.Y)>6) then dragging = true end
+			if dragging then btn.Position = UDim2.new(btnStart.X.Scale, btnStart.X.Offset+delta.X, btnStart.Y.Scale, btnStart.Y.Offset+delta.Y) end
 		end)
 		local active = false
 		local function setActive(state)
 			active = state
-			TS:Create(btn, TweenInfo.new(0.18), {
-				BackgroundColor3 = state and THEME_ACCENT or Color3.fromRGB(10, 10, 10),  
-				TextColor3 = state and Color3.fromRGB(255,255,255) or Color3.fromRGB(225, 225, 225),
-			}):Play()
-			TS:Create(stroke, TweenInfo.new(0.18), {
-				Color = state and Color3.fromRGB(235, 235, 235) or Color3.fromRGB(70, 70, 70),  
-				Transparency = state and 0 or 0.4,
-			}):Play()
+			TS:Create(btn, TweenInfo.new(0.18), {BackgroundColor3 = state and THEME_ACCENT or Color3.fromRGB(10, 10, 10), TextColor3 = state and Color3.fromRGB(255,255,255) or Color3.fromRGB(225, 225, 225)}):Play()
+			TS:Create(stroke, TweenInfo.new(0.18), {Color = state and Color3.fromRGB(235, 235, 235) or Color3.fromRGB(70, 70, 70)}):Play()
 		end
-		btn.Visible = true
 		mobileButtons[key] = {btn=btn, setActive=setActive, active=active}
 		return setActive
 	end
 
 	makeMobileButton("instaReset", "INSTA\nRESET", function()
-		doInstaReset()
-		local act = mobileButtons["instaReset"].setActive
+		doInstaReset(); local act = mobileButtons["instaReset"].setActive
 		act(true); task.delay(0.2, function() act(false) end)
 	end)
 	makeMobileButton("laggerSpeed", "LAGGER\nSPEED", function()
-		laggerToggled = not laggerToggled
-		if laggerToggled then normalSpeedEnabled = false end
-		saveConfig()
+		laggerToggled = not laggerToggled; if laggerToggled then normalSpeedEnabled = false end; saveConfig()
 	end)
 	makeMobileButton("autoSpeed", "NORMAL\nSPEED", function()
-		normalSpeedEnabled = not normalSpeedEnabled
-		if normalSpeedEnabled then laggerToggled = false end
-		saveConfig()
+		normalSpeedEnabled = not normalSpeedEnabled; if normalSpeedEnabled then laggerToggled = false end; saveConfig()
 	end)
 	makeMobileButton("autoBat", "BAT\nBOT", function()
-		if autoBatEnabled then
-			autoBatEnabled = false; disableAutoBat(); if autoBatSetVisual then autoBatSetVisual(false) end
-			mobileButtons["autoBat"].setActive(false)
-		else
-			autoBatEnabled = true; queueAutoBatStart(); if autoBatSetVisual then autoBatSetVisual(true) end
-			mobileButtons["autoBat"].setActive(true)
-		end
+		if autoBatEnabled then autoBatEnabled = false; disableAutoBat(); if autoBatSetVisual then autoBatSetVisual(false) end
+		else autoBatEnabled = true; queueAutoBatStart(); if autoBatSetVisual then autoBatSetVisual(true) end end
 		saveConfig()
 	end)
 	makeMobileButton("drop", "DROP\nBR", function()
-		runDrop()
-		local act = mobileButtons["drop"].setActive
+		runDrop(); local act = mobileButtons["drop"].setActive
 		act(true); task.delay(0.2, function() act(false) end)
 	end)
 	makeMobileButton("tp", "TP\nDOWN", function()
-		runTPFloor()
-		local act = mobileButtons["tp"].setActive
+		runTPFloor(); local act = mobileButtons["tp"].setActive
 		act(true); task.delay(0.2, function() act(false) end)
 	end)
 
-	if mobileButtons["instaReset"] then mobileButtons["instaReset"].btn.Position = UDim2.new(1,-176,0.5,-200) end
-	if mobileButtons["laggerSpeed"] then mobileButtons["laggerSpeed"].btn.Position = UDim2.new(1,-88,0.5,-200) end
+	-- Daha estetik buton pozisyonları (Mobil için ekranın sağına yapışık, daha küçük ve orantılı aralıklar)
+	if mobileButtons["instaReset"] then mobileButtons["instaReset"].btn.Position = UDim2.new(1,-148,0.5,-150) end
+	if mobileButtons["laggerSpeed"] then mobileButtons["laggerSpeed"].btn.Position = UDim2.new(1,-74,0.5,-150) end
 	
-	if mobileButtons["autoBat"] then mobileButtons["autoBat"].btn.Position = UDim2.new(1,-176,0.5,-132) end
-	if mobileButtons["autoSpeed"] then mobileButtons["autoSpeed"].btn.Position = UDim2.new(1,-88,0.5,-132) end
+	if mobileButtons["autoBat"] then mobileButtons["autoBat"].btn.Position = UDim2.new(1,-148,0.5,-95) end
+	if mobileButtons["autoSpeed"] then mobileButtons["autoSpeed"].btn.Position = UDim2.new(1,-74,0.5,-95) end
 	
-	if mobileButtons["drop"] then mobileButtons["drop"].btn.Position = UDim2.new(1,-176,0.5,-64) end
-	if mobileButtons["tp"] then mobileButtons["tp"].btn.Position = UDim2.new(1,-88,0.5,-64) end
+	if mobileButtons["drop"] then mobileButtons["drop"].btn.Position = UDim2.new(1,-148,0.5,-40) end
+	if mobileButtons["tp"] then mobileButtons["tp"].btn.Position = UDim2.new(1,-74,0.5,-40) end
 
 	task.spawn(function()
 		while true do
@@ -2092,40 +1886,7 @@ local function buildGui()
 			darkBg.BackgroundColor3 = Color3.fromRGB(15, 5, 5)
 			darkBg.BorderSizePixel = 0
 			
-			local bgGrad = Instance.new("UIGradient", darkBg)
-			bgGrad.Color = ColorSequence.new(Color3.fromRGB(40, 10, 10), Color3.fromRGB(5, 5, 10))
-			bgGrad.Rotation = 90
-			
-			local sparks = {}
-			for i = 1, 40 do
-				local spark = Instance.new("Frame", introGui)
-				local size = math.random(2, 6)
-				spark.Size = UDim2.new(0, size, 0, size * 3)
-				spark.Position = UDim2.new(math.random(), 0, 1.2, 0)
-				spark.BackgroundColor3 = math.random() > 0.5 and Color3.fromRGB(255, 100, 20) or Color3.fromRGB(255, 50, 20)
-				spark.BorderSizePixel = 0
-				Instance.new("UICorner", spark).CornerRadius = UDim.new(1, 0)
-				sparks[i] = { frame = spark, speed = math.random(15, 40) / 1000 }
-			end
-			
-			local introActive = true
-			local runConn = RunService.Heartbeat:Connect(function()
-				if not introActive then return end
-				for _, sp in ipairs(sparks) do
-					local pos = sp.frame.Position
-					local newY = pos.Y.Scale - sp.speed
-					if newY < -0.1 then newY = 1.2; sp.frame.Position = UDim2.new(math.random(), 0, newY, 0) end
-					sp.frame.Position = UDim2.new(pos.X.Scale, 0, newY, 0)
-				end
-			end)
-			
-			local center = Instance.new("Frame", introGui)
-			center.Size = UDim2.new(0, 800, 0, 300)
-			center.AnchorPoint = Vector2.new(0.5, 0.5)
-			center.Position = UDim2.new(0.5, 0, 0.5, 0)
-			center.BackgroundTransparency = 1
-			
-			local title = Instance.new("TextLabel", center)
+			local title = Instance.new("TextLabel", introGui)
 			title.Size = UDim2.new(1, 0, 1, 0)
 			title.BackgroundTransparency = 1
 			title.Text = "OPTIMUS PRIME"
@@ -2133,28 +1894,18 @@ local function buildGui()
 			title.Font = Enum.Font.GothamBlack
 			title.TextSize = 0 
 			title.TextStrokeTransparency = 0
-			title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 			
 			TS:Create(title, TweenInfo.new(0.8, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {TextSize = 85}):Play()
 			task.wait(0.8)
-			
 			TS:Create(title, TweenInfo.new(0.4), {TextColor3 = Color3.fromRGB(40, 100, 255)}):Play()
 			task.wait(0.4)
-			
 			TS:Create(title, TweenInfo.new(0.4), {TextColor3 = Color3.fromRGB(255, 40, 40)}):Play()
-			
 			task.wait(1.3)
-			
 			TS:Create(title, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.In), {TextSize = 0}):Play()
 			TS:Create(darkBg, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
-			for _, sp in ipairs(sparks) do TS:Create(sp.frame, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play() end
-			
 			task.wait(0.8)
 			
-			introActive = false
-			runConn:Disconnect()
 			introGui:Destroy()
-			
 			TS:Create(main, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = origSize}):Play()
 		end)
 	end
@@ -2202,11 +1953,7 @@ local function loadConfigState()
 		if cfg.autoBat then autoBatEnabled=true;if autoBatSetVisual then autoBatSetVisual(true) end;queueAutoBatStart() end
 		if cfg.unwalkEnabled then unwalkEnabled=true;if setUnwalkVisual then setUnwalkVisual(true) end;task.spawn(function() task.wait(0.5);startUnwalk() end) end
 		if cfg.antiLag then enableAntiLag();if setAntiLagVisual then setAntiLagVisual(true) end end
-		
-		-- FOV Load
 		if cfg.stretchRez then enableStretchRez();if setStretchRezVisual then setStretchRezVisual(true) end end
-		
-		-- No Player Collision Load
 		if cfg.noCollision then toggleNoCollision(true); if setNoCollisionVisual then setNoCollisionVisual(true) end end
 
 		if cfg.skyTheme and SKY_PRESETS[cfg.skyTheme] then applyCustomSky(cfg.skyTheme);if V.setSkyVisual then V.setSkyVisual() end end
