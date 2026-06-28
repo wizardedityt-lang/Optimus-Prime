@@ -451,6 +451,7 @@ local function stopAntiRagdoll()
     if Conns.antiRag then Conns.antiRag:Disconnect();Conns.antiRag=nil end
 end
 
+-- ====================== PLAYER ESP ======================
 do
 	local function _espCleanupPlayer(player)
 		local d = PlayerESP.playerData[player]
@@ -1091,10 +1092,10 @@ local function disablePotatoGraphics()
 end
 
 local function saveConfig()
-	local btnPosV3 = {}
+	local btnPosV4 = {}
 	for k, b in pairs(_mobileBtnRefs) do
 		if b then
-			btnPosV3[k] = {b.Position.X.Scale, b.Position.X.Offset, b.Position.Y.Scale, b.Position.Y.Offset}
+			btnPosV4[k] = {b.Position.X.Scale, b.Position.X.Offset, b.Position.Y.Scale, b.Position.Y.Offset}
 		end
 	end
 
@@ -1119,7 +1120,7 @@ local function saveConfig()
 		lockGui=_guiLocked, introEnabled=_introEnabled,
 		themeAccent=V.themeAccent, sidebarArt=V.sidebarArt,
 		playerESP=PlayerESP and PlayerESP.enabled or false,
-		buttonsLocked=buttonsLocked, btnPosV3=btnPosV3
+		buttonsLocked=buttonsLocked, btnPosV4=btnPosV4
 	}
 	if writefile then pcall(function() writefile("Optimus.json",HS:JSONEncode(cfg)) end) end
 end
@@ -1152,7 +1153,6 @@ local function buildGui()
 	pcall(function() if syn and syn.protect_gui then syn.protect_gui(gui) end end)
 	if not pcall(function() gui.Parent=game:GetService("CoreGui") end) then gui.Parent=LP:WaitForChild("PlayerGui") end
 	
-	-- Ana Menü Mobil İçin Özel Olarak Daha Da Küçültüldü
 	local main=Instance.new("Frame",gui)
 	main.AnchorPoint=Vector2.new(0.5, 0.5)  
 	main.Size=UDim2.new(0, 310, 0, 350)     
@@ -1282,7 +1282,6 @@ local function buildGui()
 		end
 	end)
 
-	-- YENİ MOBİL AÇMA BUTONU (Ekranın üst-ortasında, daha şık)
 	local miniBtn=Instance.new("TextButton",gui)
 	miniBtn.Size=UDim2.new(0,90,0,24);miniBtn.Position=UDim2.new(0.5,-45,0,10)
 	miniBtn.BackgroundColor3=Color3.fromRGB(14, 14, 14);miniBtn.BorderSizePixel=0
@@ -1439,35 +1438,35 @@ local function buildGui()
 		return btn
 	end
 
-	-- Steal Bar (Mobil İçin Ekstra Küçültüldü)
+	-- Steal Bar 
 	local pbFrame=Instance.new("Frame",gui)
-	pbFrame.Size=UDim2.new(0,240,0,28);pbFrame.Position=UDim2.new(0.5,-120,1,-40)
+	pbFrame.Size=UDim2.new(0,200,0,26);pbFrame.Position=UDim2.new(0.5,-100,1,-35)
 	pbFrame.BackgroundColor3=Color3.fromRGB(0, 0, 0);pbFrame.ClipsDescendants=true
 	Instance.new("UICorner",pbFrame).CornerRadius=UDim.new(1,0)
 	local pbSt=Instance.new("UIStroke",pbFrame); pbSt.Color=THEME_ACCENT; pbSt.Thickness=1.2; pbSt.Transparency=0.2
 	drag(pbFrame)
 	local fillRegion = Instance.new("Frame", pbFrame)
-	fillRegion.Size = UDim2.new(0, 130, 1, -6); fillRegion.Position = UDim2.new(0, 4, 0, 3)
+	fillRegion.Size = UDim2.new(0, 110, 1, -4); fillRegion.Position = UDim2.new(0, 3, 0, 2)
 	fillRegion.BackgroundColor3 = Color3.fromRGB(8, 8, 8); fillRegion.ClipsDescendants = true
 	Instance.new("UICorner", fillRegion).CornerRadius = UDim.new(1, 0)
 	local fillRegStroke = Instance.new("UIStroke", fillRegion); fillRegStroke.Color = THEME_ACCENT; fillRegStroke.Transparency = 0.6
 	progressFill=Instance.new("Frame",fillRegion); progressFill.Size=UDim2.new(0,0,1,0); progressFill.BackgroundColor3=THEME_ACCENT
 	local stealLbl = Instance.new("TextLabel", fillRegion)
-	stealLbl.Size = UDim2.new(0, 50, 1, 0); stealLbl.Position = UDim2.new(0, 8, 0, 0)
+	stealLbl.Size = UDim2.new(0, 50, 1, 0); stealLbl.Position = UDim2.new(0, 6, 0, 0)
 	stealLbl.BackgroundTransparency = 1; stealLbl.Text = "STEAL"; stealLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-	stealLbl.Font = Enum.Font.GothamBlack; stealLbl.TextSize = 9; stealLbl.TextXAlignment = Enum.TextXAlignment.Left
+	stealLbl.Font = Enum.Font.GothamBlack; stealLbl.TextSize = 8; stealLbl.TextXAlignment = Enum.TextXAlignment.Left
 	progressPct=Instance.new("TextLabel",fillRegion)
-	progressPct.Size=UDim2.new(0,50,1,0);progressPct.Position=UDim2.new(1,-55,0,0)
+	progressPct.Size=UDim2.new(0,40,1,0);progressPct.Position=UDim2.new(1,-45,0,0)
 	progressPct.BackgroundTransparency=1;progressPct.Text="—";progressPct.TextColor3=Color3.fromRGB(230, 230, 230)
 	progressPct.Font=Enum.Font.GothamBold;progressPct.TextSize=8;progressPct.TextXAlignment=Enum.TextXAlignment.Right
 	
 	local pbDiv = Instance.new("Frame", pbFrame)
-	pbDiv.Size = UDim2.new(0, 1, 0, 10); pbDiv.Position = UDim2.new(0, 140, 0.5, -5)
+	pbDiv.Size = UDim2.new(0, 1, 0, 10); pbDiv.Position = UDim2.new(0, 120, 0.5, -5)
 	pbDiv.BackgroundColor3 = THEME_ACCENT; pbDiv.BackgroundTransparency = 0.7; pbDiv.BorderSizePixel = 0
 	progressRadLbl=Instance.new("TextLabel",pbFrame)
-	progressRadLbl.Size=UDim2.new(0,90,1,0);progressRadLbl.Position=UDim2.new(0,145,0,0)
+	progressRadLbl.Size=UDim2.new(0,75,1,0);progressRadLbl.Position=UDim2.new(0,123,0,0)
 	progressRadLbl.BackgroundTransparency=1;progressRadLbl.Text="-- · --"
-	progressRadLbl.TextColor3=Color3.fromRGB(190, 190, 190);progressRadLbl.Font=Enum.Font.GothamBold;progressRadLbl.TextSize=8
+	progressRadLbl.TextColor3=Color3.fromRGB(190, 190, 190);progressRadLbl.Font=Enum.Font.GothamBold;progressRadLbl.TextSize=7
 	progressRadLbl.TextXAlignment=Enum.TextXAlignment.Center
 
 	local _pbState = "IDLE"
@@ -1559,7 +1558,7 @@ local function buildGui()
 	mkSect("Interface")
 	setIntroVisual = mkToggle("Intro", function(on) _introEnabled = on; saveConfig() end)
 	
-	-- YENİ: BUTONLARI KİLİTLEME ÖZELLİĞİ
+	-- BUTONLARI KİLİTLEME ÖZELLİĞİ
 	setButtonsLockVisual = mkToggle("Lock Mobile Buttons", function(on) buttonsLocked = on; saveConfig() end)
 
 	mkSect("Config")
@@ -1572,7 +1571,7 @@ local function buildGui()
 		btn.MouseButton1Click:Connect(function() saveConfig() end)
 	end
 	
-	-- EKSİKSİZ 6 MOBİL BUTONU VE KİLİT MANTIĞI FİXİ
+	-- EKSİKSİZ 6 MOBİL BUTONU (TIKLAMA FİXİ)
 	local mobileButtons = {}
 	local function makeMobileButton(key, label, onPress)
 		local btn = Instance.new("TextButton", gui)
@@ -1590,7 +1589,6 @@ local function buildGui()
 		local pressing, dragging = false, false
 		local pressPos, btnStart = nil, nil
 		
-		-- KİLİTLİYKEN BİLE TIKLAMA KAYDEDİLSİN (SÜRÜKLEME İPTAL OLACAK)
 		btn.InputBegan:Connect(function(i)
 			if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
 				pressing = true; dragging = false; pressPos = i.Position; btnStart = btn.Position
@@ -1605,10 +1603,12 @@ local function buildGui()
 		UIS.InputChanged:Connect(function(i)
 			if not pressing then return end
 			if i.UserInputType~=Enum.UserInputType.MouseMovement and i.UserInputType~=Enum.UserInputType.Touch then return end
+			
+			if buttonsLocked then return end -- KİLİTLİYSE SÜRÜKLEMEYİ İPTAL ET
+			
 			local delta = i.Position - pressPos
 			if not dragging and (math.abs(delta.X)>6 or math.abs(delta.Y)>6) then dragging = true end
-			-- SADECE BUTONLAR KİLİTLİ DEĞİLSE SÜRÜKLEMEYE İZİN VER
-			if dragging and not buttonsLocked then 
+			if dragging then 
 				btn.Position = UDim2.new(btnStart.X.Scale, btnStart.X.Offset+delta.X, btnStart.Y.Scale, btnStart.Y.Offset+delta.Y)
 			end
 		end)
@@ -1731,9 +1731,9 @@ local function loadConfigState()
 	if progressRadLbl then progressRadLbl.Text=string.format("Radius: %.2g",Steal.StealRadius) end
 	if autoTPHeightBox then autoTPHeightBox.Text=tostring(autoTPHeight) end
 
-	-- Mobil Buton Pozisyonları Yükleme (Bug Fix için V3 key kullanıldı, eski bozuk ayarlar silinir)
-	if cfg.btnPosV3 then
-		for k, p in pairs(cfg.btnPosV3) do
+	-- Mobil Buton Pozisyonları Yükleme (Bug Fix için V4 key kullanıldı, eski bozuk ayarlar silinir)
+	if cfg.btnPosV4 then
+		for k, p in pairs(cfg.btnPosV4) do
 			if _mobileBtnRefs[k] and type(p) == "table" and #p == 4 then
 				_mobileBtnRefs[k].Position = UDim2.new(p[1], p[2], p[3], p[4])
 			end
@@ -1762,7 +1762,7 @@ local function loadConfigState()
 		if cfg.stretchRez then enableStretchRez();if setStretchRezVisual then setStretchRezVisual(true) end end
 		if cfg.noCollision then toggleNoCollision(true); if setNoCollisionVisual then setNoCollisionVisual(true) end end
 		
-		if buttonsLocked and setButtonsLockVisual then setButtonsLockVisual(true) end
+		if buttonsLocked and setButtonsLockVisual then setButtonsLockVisual(buttonsLocked) end
 
 		if cfg.skyTheme and SKY_PRESETS[cfg.skyTheme] then applyCustomSky(cfg.skyTheme);if V.setSkyVisual then V.setSkyVisual() end end
 		if cfg.ultraMode then enableUltraMode();if V.setUltraModeVisual then V.setUltraModeVisual(true) end end
