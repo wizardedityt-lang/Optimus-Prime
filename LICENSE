@@ -33,8 +33,8 @@ local _autoBatTarget = nil
 local _autoBatLastScan = 0
 local resetAutoBatMotion = nil
 
--- KUSURSUZ YAPIŞAN AİMBOT AYARLARI (Mesafe 0, Hız artırıldı)
-local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_TURN_SPEED, AUTO_BAT_MAX_TURN_RATE = 85, 85, 1500, 100
+-- YENİ KUSURSUZ AİMBOT AYARLARI (Mesafe 1.5, Hız 85)
+local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_DIST = 85, 85, 1.5
 
 local setBatCounterVisual = nil
 local startBatCounter,stopBatCounter
@@ -801,7 +801,7 @@ local function disableAutoBat()
 end
 local function queueAutoBatStart() enableAutoBat() end
 
--- ====================== KUSURSUZ YAPIŞAN AİMBOT ======================
+-- ====================== KUSURSUZ YAPIŞAN AİMBOT DÖNGÜSÜ ======================
 RunService.Heartbeat:Connect(function(dt)
 	if not autoBatEnabled then return end
 	if LP:GetAttribute("SpawnKoruma") then return end 
@@ -829,52 +829,63 @@ RunService.Heartbeat:Connect(function(dt)
 	
 	local target = getAutoBatTarget()
 	if target then
+		hum.AutoRotate = false
 		local targetVel = target.AssemblyLinearVelocity
-		-- TP Down hilesini filtrele
+		
+		-- Y eksenindeki yanıltıcı yüksek hızları filtrele (TP Down fixi)
 		if targetVel.Y < -50 then targetVel = Vector3.new(targetVel.X, 0, targetVel.Z) end
 		if math.abs(targetVel.X) > 150 or math.abs(targetVel.Z) > 150 then targetVel = Vector3.zero end
 		
-		-- GELECEĞİ TAHMİN (Ping Telafisi)
-		local aimTargetPos = target.Position + (targetVel * 0.12)
-		hum.AutoRotate = false
+		-- Hedefin gelecekteki pozisyonunu tahmin et (Ping telafisi)
+		local aimTargetPos = target.Position + (targetVel * 0.1) 
 		
-		-- SADECE YATAY EKSENDE ANINDA DÖN (Yere eğilme yok, ölmeyi engeller)
-		local lookPos = Vector3.new(target.Position.X, root.Position.Y, target.Position.Z)
-		local lookDir = lookPos - root.Position
-		if lookDir.Magnitude > 0.1 then
-			local targetYaw = math.deg(math.atan2(-lookDir.X, -lookDir.Z))
-			local yawDelta = (targetYaw - root.Orientation.Y + 180) % 360 - 180
-			local yawRate = math.clamp(math.rad(yawDelta) * AUTO_BAT_TURN_SPEED, -AUTO_BAT_MAX_TURN_RATE, AUTO_BAT_MAX_TURN_RATE)
-			root.AssemblyAngularVelocity = Vector3.new(0, yawRate, 0)
-		else 
-			root.AssemblyAngularVelocity = Vector3.zero 
-		end
+		-- Yön Hesaplama (Adamla aramdaki açı)
+		local flatLook = Vector3.new(aimTargetPos.X - root.Position.X, 0, aimTargetPos.Z - root.Position.Z)
+		local dir = flatLook.Magnitude > 0.01 and flatLook.Unit or Vector3.new(0, 0, 1)
 		
-		-- HAREKET VE YAPIŞMA (Arkada kalmayı önlemek için direkt hedefin içine girer)
-		local moveDir = aimTargetPos - root.Position
-		local hDir = Vector3.new(moveDir.X, 0, moveDir.Z)
-		local hVel = Vector3.zero
+		-- İstenen Durma Noktası: Adamın tam önü (AUTO_BAT_DIST = 1.5 stud)
+		local standPos = aimTargetPos - (dir * AUTO_BAT_DIST)
 		
-		if hDir.Magnitude > 0.1 then
-			hVel = hDir.Unit * AUTO_BAT_SPEED
-			
-			-- EĞER HEDEF UZAKLAŞIYORSA VEYA 2 STUDDAN UZAKSA KAYARAK ANINDA YAPIŞ
-			if hDir.Magnitude > 2 then
-				-- Yüksek hızda fiziksel CFrame kayması (Yerin altına inmeden direkt adama uçurur)
-				root.CFrame = root.CFrame + (hDir.Unit * dt * 50)
-			end
-		end
+		local moveDir = standPos - root.Position
+		local flatMoveDir = Vector3.new(moveDir.X, 0, moveDir.Z)
+		local dist2D = flatMoveDir.Magnitude
 		
-		-- AŞAĞI/YUKARI GÜVENLİ TAKİP (Yerin altına girip ölmeyi önler)
-		local vVel = Vector3.zero
-		if math.abs(moveDir.Y) > 0.5 then
-			vVel = Vector3.new(0, math.sign(moveDir.Y) * AUTO_BAT_VERT_SPEED, 0)
+		-- EĞER MESAFE 2.5 STUD'DAN BÜYÜKSE DİREKT TP OL (ÖLME FİXİ UYGULANDI)
+		if dist2D > 2.5 then
+			-- Işınlanırken yerin altına düşmemek için hedefle tam olarak aynı Y koordinatında (aimTargetPos.Y) tutulur!
+			root.CFrame = CFrame.lookAt(
+				Vector3.new(standPos.X, aimTargetPos.Y, standPos.Z), 
+				Vector3.new(aimTargetPos.X, aimTargetPos.Y, aimTargetPos.Z)
+			)
+			-- Fling yememek için hızları sıfırla
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
 		else
-			vVel = Vector3.new(0, moveDir.Y * 10, 0)
+			-- MESAFE YAKINSA (1.5 Stud önünde durup döver)
+			
+			-- 1. Anında adama dönme (Sadece Y ekseninde döner, eğilme/ölme yapmaz)
+			if flatLook.Magnitude > 0.01 then
+				local targetYaw = math.deg(math.atan2(-flatLook.X, -flatLook.Z))
+				local yawDelta = (targetYaw - root.Orientation.Y + 180) % 360 - 180
+				root.AssemblyAngularVelocity = Vector3.new(0, math.rad(yawDelta) * 1500, 0)
+			else 
+				root.AssemblyAngularVelocity = Vector3.zero 
+			end
+			
+			-- 2. Hız ile takip (Velocity)
+			local hVel = flatMoveDir.Unit * AUTO_BAT_SPEED
+			
+			-- 3. Y Ekseni (Aşağı/Yukarı TP Down takibi)
+			local vVel = Vector3.zero
+			if math.abs(moveDir.Y) > 0.5 then
+				vVel = Vector3.new(0, math.sign(moveDir.Y) * AUTO_BAT_VERT_SPEED, 0)
+			else
+				vVel = Vector3.new(0, moveDir.Y * 15, 0)
+			end
+			
+			root.AssemblyLinearVelocity = hVel + vVel
+			if flatMoveDir.Magnitude > 0.5 then hum:Move(flatMoveDir.Unit, false) end
 		end
-		
-		root.AssemblyLinearVelocity = hVel + vVel
-		if hDir.Magnitude > 0.5 then hum:Move(hDir.Unit, false) end
 	else
 		hum.AutoRotate = true; root.AssemblyAngularVelocity = Vector3.zero
 	end
