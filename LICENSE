@@ -1,5 +1,3 @@
---- START OF FILE Paste June 28, 2026 - 3:55PM ---
-
 repeat task.wait() until game:IsLoaded()
 local Players,RunService,UIS,TS,Lighting,HS = game:GetService("Players"),game:GetService("RunService"),game:GetService("UserInputService"),game:GetService("TweenService"),game:GetService("Lighting"),game:GetService("HttpService")
 local LP = Players.LocalPlayer
@@ -34,7 +32,7 @@ local autoBatEquippedThisRun = false
 local _autoBatTarget = nil
 local _autoBatLastScan = 0
 local resetAutoBatMotion = nil
-local AUTO_BAT_SPEED,AUTO_BAT_VERT_SPEED,AUTO_BAT_DIST,AUTO_BAT_HEIGHT,AUTO_BAT_V_OFF,AUTO_BAT_TURN_SPEED,AUTO_BAT_MAX_TURN_RATE = 58,52,-2.8,4.75,1,285,12
+local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_DIST = 65, 85, 2.5
 local setBatCounterVisual = nil
 local startBatCounter,stopBatCounter
 local antiLagEnabled = false
@@ -800,16 +798,18 @@ local function disableAutoBat()
 end
 local function queueAutoBatStart() enableAutoBat() end
 
+local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_DIST = 65, 85, 2.5
+
 RunService.Heartbeat:Connect(function(dt)
 	if not autoBatEnabled then return end
 	if LP:GetAttribute("SpawnKoruma") then return end 
-	local char=LP.Character
-	local hum=char and char:FindFirstChildOfClass("Humanoid")
-	local root=char and char:FindFirstChild("HumanoidRootPart")
+	local char = LP.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local root = char and char:FindFirstChild("HumanoidRootPart")
 	if not root or not hum then return end
 	if hum.WalkSpeed <= 0 or root.Anchored then root.AssemblyAngularVelocity = Vector3.zero; return end
 
-	-- AKILLI BAT BOT: EĞER ADAM TAŞIYORSAN (HIZ <= 32 İSE) ÇALIŞMAYI DURAKLATIR, BIRAKTIĞINDA DEVAM EDER
+	-- AKILLI BAT BOT: EĞER ADAM TAŞIYORSAN DURAKLAT
 	if hum.WalkSpeed <= 32 then
 		hum.AutoRotate = true
 		root.AssemblyAngularVelocity = Vector3.zero
@@ -824,48 +824,62 @@ RunService.Heartbeat:Connect(function(dt)
 			if bpBat then pcall(function() hum:EquipTool(bpBat) end) end
 		end
 	end
-	local target=getAutoBatTarget()
+	
+	local target = getAutoBatTarget()
 	if target then
-		local targetVel=target.AssemblyLinearVelocity
-		if math.abs(targetVel.X) > 150 or math.abs(targetVel.Y) > 150 or math.abs(targetVel.Z) > 150 then targetVel = Vector3.new(0, 0, 0) end
+		hum.AutoRotate = false
 		
-		local aimTargetPos=target.Position+(targetVel*math.clamp(targetVel.Magnitude/130,0.05,0.15))+Vector3.new(0,AUTO_BAT_V_OFF,0)
-		hum.AutoRotate=false
-		local look=aimTargetPos-root.Position
-		local flatLook=Vector3.new(look.X,0,look.Z)
-		if look.Magnitude>0.01 and flatLook.Magnitude>0.01 then
-			local targetYaw=math.deg(math.atan2(-flatLook.X,-flatLook.Z))
-			local yawDelta=(targetYaw-root.Orientation.Y+180)%360-180
-			local targetPitch=math.deg(math.atan2(look.Y,flatLook.Magnitude))
-			local pitchDelta=(targetPitch-root.Orientation.X+180)%360-180
-			local yawRate=math.clamp(math.rad(yawDelta)*AUTO_BAT_TURN_SPEED,-AUTO_BAT_MAX_TURN_RATE,AUTO_BAT_MAX_TURN_RATE)
-			local pitchRate=math.clamp(math.rad(pitchDelta)*AUTO_BAT_TURN_SPEED,-AUTO_BAT_MAX_TURN_RATE,AUTO_BAT_MAX_TURN_RATE)
-			local yawRad=math.rad(root.Orientation.Y)
-			local rightAxis=Vector3.new(math.cos(yawRad),0,-math.sin(yawRad))
-			root.AssemblyAngularVelocity=Vector3.new(0,yawRate,0)+(rightAxis*pitchRate)
-		else root.AssemblyAngularVelocity=Vector3.zero end
+		-- TP DOWN KORUMASI: Y eksenindeki yanıltıcı hızları filtrele
+		local targetVel = target.AssemblyLinearVelocity
+		if targetVel.Y < -50 then targetVel = Vector3.new(targetVel.X, 0, targetVel.Z) end
+		if targetVel.Magnitude > 130 then targetVel = Vector3.zero end
 		
-		local dir=look.Magnitude>0.01 and look.Unit or Vector3.zero
-		local standPos=aimTargetPos-(dir*AUTO_BAT_DIST)+Vector3.new(0,AUTO_BAT_HEIGHT,0)
-		local moveDir=standPos-root.Position
-		local hDir=Vector3.new(moveDir.X,0,moveDir.Z)
-		local hVel=hDir.Magnitude>0.1 and hDir.Unit*AUTO_BAT_SPEED or Vector3.zero
-		local vVel=math.abs(moveDir.Y)>0.1 and Vector3.new(0,math.sign(moveDir.Y)*AUTO_BAT_VERT_SPEED,0) or Vector3.new(0,-2,0)
+		-- Hafif ileri dönük tahmin (Prediction)
+		local aimTargetPos = target.Position + (targetVel * 0.08)
 		
-		if hVel.Magnitude > 100 then
-			local extra = hVel.Magnitude - 100
-			hVel = hVel.Unit * 100
-			root.CFrame = root.CFrame + (hVel.Unit * extra * dt)
+		-- 1. ANINDA HEDEFE DÖNME (ISKALAMAYI ÖNLER)
+		-- Sadece X ve Z ekseninde dön, adamın ayaklarına bakıp eğilme
+		local lookPos = Vector3.new(aimTargetPos.X, root.Position.Y, aimTargetPos.Z)
+		if (lookPos - root.Position).Magnitude > 0.1 then
+			root.CFrame = CFrame.lookAt(root.Position, lookPos)
 		end
-		if vVel.Magnitude > 100 then vVel = vVel.Unit * 100 end
 		
-		root.AssemblyLinearVelocity=hVel+vVel
-		if hDir.Magnitude>0.5 then hum:Move(hDir.Unit,false) end
+		-- 2. TEPEDEN BAKMAYI ÖNLE & DOĞRU MESAFE
+		local flatLook = Vector3.new(aimTargetPos.X - root.Position.X, 0, aimTargetPos.Z - root.Position.Z)
+		local dir = flatLook.Magnitude > 0.01 and flatLook.Unit or Vector3.new(0, 0, 1)
+		
+		-- Tam adamın Y hizasında, AUTO_BAT_DIST kadar önünde dur
+		local standPos = aimTargetPos - (dir * AUTO_BAT_DIST)
+		local moveDir = standPos - root.Position
+		
+		-- 3. HIZ, HAREKET VE TP DOWN TAKİBİ
+		local hDir = Vector3.new(moveDir.X, 0, moveDir.Z)
+		local hVel = hDir.Magnitude > 0.1 and hDir.Unit * AUTO_BAT_SPEED or Vector3.zero
+		
+		-- Adam TP down yaparsa agresif dikey inme
+		local vVel = Vector3.zero
+		if math.abs(moveDir.Y) > 0.5 then
+			vVel = Vector3.new(0, math.sign(moveDir.Y) * AUTO_BAT_VERT_SPEED, 0)
+		else
+			vVel = Vector3.new(0, moveDir.Y * 10, 0) -- İnce hizalama
+		end
+		
+		root.AssemblyLinearVelocity = hVel + vVel
+		
+		-- EĞER ADAM ÇOK HIZLI TP DOWN ATARSA (Mesafe 10'dan büyükse) CFRAME İLE IŞINLANIP YAKALA
+		if moveDir.Magnitude > 10 then
+			root.CFrame = root.CFrame + (moveDir * dt * 8)
+		end
+
+		if hDir.Magnitude > 0.5 then hum:Move(hDir.Unit, false) end
 	else
-		hum.AutoRotate=true; root.AssemblyAngularVelocity=Vector3.zero
+		hum.AutoRotate = true
+		root.AssemblyAngularVelocity = Vector3.zero
 	end
+	
+	-- 4. OTOMATİK VURMA (AUTO SWING)
 	if autoSwingEnabled then
-		local bat=char:FindFirstChild("Bat")
+		local bat = char:FindFirstChild("Bat")
 		if bat and bat:IsA("Tool") then bat:Activate() end
 	end
 end)
