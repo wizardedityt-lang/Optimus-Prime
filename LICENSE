@@ -33,8 +33,8 @@ local _autoBatTarget = nil
 local _autoBatLastScan = 0
 local resetAutoBatMotion = nil
 
--- YENİ VE GÜVENLİ AİMBOT AYARLARI
-local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_DIST, AUTO_BAT_HEIGHT, AUTO_BAT_TURN_SPEED, AUTO_BAT_MAX_TURN_RATE = 65, 85, 2.5, 0.5, 1500, 100
+-- KUSURSUZ YAPIŞAN AİMBOT AYARLARI (Mesafe 0, Hız artırıldı)
+local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_TURN_SPEED, AUTO_BAT_MAX_TURN_RATE = 85, 85, 1500, 100
 
 local setBatCounterVisual = nil
 local startBatCounter,stopBatCounter
@@ -801,7 +801,7 @@ local function disableAutoBat()
 end
 local function queueAutoBatStart() enableAutoBat() end
 
--- ====================== AİMBOT KALBİ (ÖLÜM FİXLENDİ) ======================
+-- ====================== KUSURSUZ YAPIŞAN AİMBOT ======================
 RunService.Heartbeat:Connect(function(dt)
 	if not autoBatEnabled then return end
 	if LP:GetAttribute("SpawnKoruma") then return end 
@@ -830,19 +830,19 @@ RunService.Heartbeat:Connect(function(dt)
 	local target = getAutoBatTarget()
 	if target then
 		local targetVel = target.AssemblyLinearVelocity
-		-- TP Down hilesini filtrele (Aşırı eksi Y hızını yoksay)
+		-- TP Down hilesini filtrele
 		if targetVel.Y < -50 then targetVel = Vector3.new(targetVel.X, 0, targetVel.Z) end
 		if math.abs(targetVel.X) > 150 or math.abs(targetVel.Z) > 150 then targetVel = Vector3.zero end
 		
-		local aimTargetPos = target.Position + (targetVel * 0.08)
+		-- GELECEĞİ TAHMİN (Ping Telafisi)
+		local aimTargetPos = target.Position + (targetVel * 0.12)
 		hum.AutoRotate = false
 		
-		local look = aimTargetPos - root.Position
-		local flatLook = Vector3.new(look.X, 0, look.Z)
-		
-		-- SADECE YATAY EKSENDE ANINDA DÖN (Yere eğilmeyi engelleyip karakterin ölmesini önler)
-		if flatLook.Magnitude > 0.01 then
-			local targetYaw = math.deg(math.atan2(-flatLook.X, -flatLook.Z))
+		-- SADECE YATAY EKSENDE ANINDA DÖN (Yere eğilme yok, ölmeyi engeller)
+		local lookPos = Vector3.new(target.Position.X, root.Position.Y, target.Position.Z)
+		local lookDir = lookPos - root.Position
+		if lookDir.Magnitude > 0.1 then
+			local targetYaw = math.deg(math.atan2(-lookDir.X, -lookDir.Z))
 			local yawDelta = (targetYaw - root.Orientation.Y + 180) % 360 - 180
 			local yawRate = math.clamp(math.rad(yawDelta) * AUTO_BAT_TURN_SPEED, -AUTO_BAT_MAX_TURN_RATE, AUTO_BAT_MAX_TURN_RATE)
 			root.AssemblyAngularVelocity = Vector3.new(0, yawRate, 0)
@@ -850,15 +850,22 @@ RunService.Heartbeat:Connect(function(dt)
 			root.AssemblyAngularVelocity = Vector3.zero 
 		end
 		
-		local dir = flatLook.Magnitude > 0.01 and flatLook.Unit or Vector3.zero
-		-- AUTO_BAT_HEIGHT ayarıyla tam adamın hizasında (0.5) dur
-		local standPos = aimTargetPos - (dir * AUTO_BAT_DIST) + Vector3.new(0, AUTO_BAT_HEIGHT, 0)
-		local moveDir = standPos - root.Position
-		
+		-- HAREKET VE YAPIŞMA (Arkada kalmayı önlemek için direkt hedefin içine girer)
+		local moveDir = aimTargetPos - root.Position
 		local hDir = Vector3.new(moveDir.X, 0, moveDir.Z)
-		local hVel = hDir.Magnitude > 0.1 and hDir.Unit * AUTO_BAT_SPEED or Vector3.zero
+		local hVel = Vector3.zero
 		
-		-- AŞAĞI/YUKARI TAKİP (CFrame kullanmadan, düşman TP Down atarsa sadece Velocity ile takip et)
+		if hDir.Magnitude > 0.1 then
+			hVel = hDir.Unit * AUTO_BAT_SPEED
+			
+			-- EĞER HEDEF UZAKLAŞIYORSA VEYA 2 STUDDAN UZAKSA KAYARAK ANINDA YAPIŞ
+			if hDir.Magnitude > 2 then
+				-- Yüksek hızda fiziksel CFrame kayması (Yerin altına inmeden direkt adama uçurur)
+				root.CFrame = root.CFrame + (hDir.Unit * dt * 50)
+			end
+		end
+		
+		-- AŞAĞI/YUKARI GÜVENLİ TAKİP (Yerin altına girip ölmeyi önler)
 		local vVel = Vector3.zero
 		if math.abs(moveDir.Y) > 0.5 then
 			vVel = Vector3.new(0, math.sign(moveDir.Y) * AUTO_BAT_VERT_SPEED, 0)
@@ -866,21 +873,13 @@ RunService.Heartbeat:Connect(function(dt)
 			vVel = Vector3.new(0, moveDir.Y * 10, 0)
 		end
 		
-		-- Yatayda anti-glitch yumuşatması (Sadece yatay CFrame, yerin altına sokmaz)
-		if hVel.Magnitude > 100 then
-			local extra = hVel.Magnitude - 100
-			hVel = hVel.Unit * 100
-			root.CFrame = root.CFrame + (hVel.Unit * extra * dt)
-		end
-		
-		if vVel.Magnitude > 100 then vVel = vVel.Unit * 100 end
-		
 		root.AssemblyLinearVelocity = hVel + vVel
 		if hDir.Magnitude > 0.5 then hum:Move(hDir.Unit, false) end
 	else
 		hum.AutoRotate = true; root.AssemblyAngularVelocity = Vector3.zero
 	end
 	
+	-- OTOMATİK VURMA (AUTO SWING)
 	if autoSwingEnabled then
 		local bat = char:FindFirstChild("Bat")
 		if bat and bat:IsA("Tool") then bat:Activate() end
