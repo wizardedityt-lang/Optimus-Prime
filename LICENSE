@@ -1,5 +1,3 @@
---- START OF FILE ---
-
 repeat task.wait() until game:IsLoaded()
 local Players,RunService,UIS,TS,Lighting,HS = game:GetService("Players"),game:GetService("RunService"),game:GetService("UserInputService"),game:GetService("TweenService"),game:GetService("Lighting"),game:GetService("HttpService")
 local LP = Players.LocalPlayer
@@ -35,8 +33,8 @@ local _autoBatTarget = nil
 local _autoBatLastScan = 0
 local resetAutoBatMotion = nil
 
--- YENİ KUSURSUZ AİMBOT AYARLARI (Mesafe artık 0.8, daha çok yapışır)
-local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_DIST = 85, 85, 0.8
+-- YENİ AİMBOT AYARLARI
+local AUTO_BAT_SPEED, AUTO_BAT_VERT_SPEED, AUTO_BAT_DIST = 85, 85, 1.5
 
 local setBatCounterVisual = nil
 local startBatCounter,stopBatCounter
@@ -803,7 +801,7 @@ local function disableAutoBat()
 end
 local function queueAutoBatStart() enableAutoBat() end
 
--- ====================== KUSURSUZ YAPIŞAN AİMBOT DÖNGÜSÜ (TP DÜZELTİLDİ) ======================
+-- ====================== NEBULA AİMBOT MANTIĞI (TP YOK, LERP VAR) ======================
 RunService.Heartbeat:Connect(function(dt)
 	if not autoBatEnabled then return end
 	if LP:GetAttribute("SpawnKoruma") then return end 
@@ -832,51 +830,51 @@ RunService.Heartbeat:Connect(function(dt)
 	local target = getAutoBatTarget()
 	if target then
 		hum.AutoRotate = false
+		
+		-- HEDEFİN HIZINI AL VE LİMİTLE (Nebula)
 		local targetVel = target.AssemblyLinearVelocity
+		local safeTargetVel = targetVel
+		if safeTargetVel.Magnitude > 150 then safeTargetVel = Vector3.zero end
+		safeTargetVel = Vector3.new(safeTargetVel.X, math.clamp(safeTargetVel.Y, -50, 50), safeTargetVel.Z)
+
+		-- TAHMİNİ POZİSYON HESABI (CFrame Teleportu Yok!)
+		local predictPos = target.Position + (safeTargetVel * 0.1)
+		predictPos = predictPos + target.CFrame.LookVector * 0.3
+
+		local direction = predictPos - root.Position
+		local flatDir = Vector3.new(direction.X, 0, direction.Z)
+		local dist2D = flatDir.Magnitude
 		
-		-- Y eksenindeki yanıltıcı yüksek hızları filtrele (TP Down fixi)
-		if targetVel.Y < -50 then targetVel = Vector3.new(targetVel.X, 0, targetVel.Z) end
-		if math.abs(targetVel.X) > 150 or math.abs(targetVel.Z) > 150 then targetVel = Vector3.zero end
+		if dist2D > 0 then flatDir = flatDir.Unit else flatDir = Vector3.zero end
 		
-		-- Hedefin gelecekteki pozisyonunu tahmin et (Geriden gelmemesi için prediction artırıldı)
-		local pingComp = 0.15
-		local aimTargetPos = target.Position + (targetVel * pingComp) 
-		
-		-- Yön Hesaplama (Adamla aramdaki açı)
-		local flatLook = Vector3.new(aimTargetPos.X - root.Position.X, 0, aimTargetPos.Z - root.Position.Z)
-		local dir = flatLook.Magnitude > 0.01 and flatLook.Unit or Vector3.new(0, 0, 1)
-		
-		-- İstenen Durma Noktası: Adamın dibi (Tam sağlam vurması için AUTO_BAT_DIST düşürüldü)
-		local standPos = aimTargetPos - (dir * AUTO_BAT_DIST)
-		
-		local moveDir = standPos - root.Position
-		local flatMoveDir = Vector3.new(moveDir.X, 0, moveDir.Z)
-		
-		-- AİMBOT YÖNELİMİ (Anında adama dönme, Eğilme yapmaz)
-		if flatLook.Magnitude > 0.01 then
-			local targetYaw = math.deg(math.atan2(-flatLook.X, -flatLook.Z))
-			local yawDelta = (targetYaw - root.Orientation.Y + 180) % 360 - 180
-			root.AssemblyAngularVelocity = Vector3.new(0, math.rad(yawDelta) * 1500, 0)
-		else 
-			root.AssemblyAngularVelocity = Vector3.zero 
+		-- YÜKSEKLİK KONTROLÜ
+		local desiredHeight = target.Position.Y + 3.0 
+		local yVel = (desiredHeight - root.Position.Y) * 10
+		yVel = math.clamp(yVel, -AUTO_BAT_VERT_SPEED, AUTO_BAT_VERT_SPEED) 
+
+		-- YAKLAŞINCA DURMA (4.5 Stud Koruma, flingi engeller)
+		local currentSpeed = AUTO_BAT_SPEED
+		if dist2D < 4.5 then 
+			currentSpeed = 0 
 		end
-		
-		-- YÜRÜYEREK YAPIŞMA - IŞINLANMA (TP) TAMAMEN İPTAL EDİLDİ
-		-- Mesafe fazlaysa arayı daha hızlı kapatır (Hızlanıp adama yetişir, ışınlanmaz)
-		local currentSpeed = (flatMoveDir.Magnitude > 5) and AUTO_BAT_SPEED * 1.2 or AUTO_BAT_SPEED
-		local hVel = flatMoveDir.Unit * math.min(currentSpeed, 200)
-		
-		-- Y Ekseni (Aşağı/Yukarı TP Down takibi)
-		local vVel = Vector3.zero
-		if math.abs(moveDir.Y) > 0.5 then
-			vVel = Vector3.new(0, math.sign(moveDir.Y) * AUTO_BAT_VERT_SPEED, 0)
+
+		-- SMOOTH LERP (YUMUŞAK HIZLANMA VE YAPIŞMA)
+		local desiredVel = Vector3.new(flatDir.X * currentSpeed, yVel, flatDir.Z * currentSpeed)
+		root.AssemblyLinearVelocity = root.AssemblyLinearVelocity:Lerp(desiredVel, 0.8)
+
+		-- SMOOTH ROTASYON (Adamın Yüzüne Bakma - CFrame/AngularVelocity)
+		local toPredict = predictPos - root.Position
+		if toPredict.Magnitude > 0.1 then
+			local goalCF = CFrame.lookAt(root.Position, predictPos)
+			local curCF  = root.CFrame
+			local diffCF = curCF:Inverse() * goalCF
+			local rx, ry, rz = diffCF:ToEulerAnglesXYZ()
+			rx = math.clamp(rx, -2.5, 2.5); ry = math.clamp(ry, -2.5, 2.5); rz = math.clamp(rz, -2.5, 2.5)
+			root.AssemblyAngularVelocity = root.CFrame:VectorToWorldSpace(Vector3.new(rx * 45, ry * 45, rz * 45))
 		else
-			vVel = Vector3.new(0, moveDir.Y * 15, 0)
+			root.AssemblyAngularVelocity = Vector3.zero
 		end
-		
-		-- Velocity ile sürüklen
-		root.AssemblyLinearVelocity = hVel + vVel
-		if flatMoveDir.Magnitude > 0.5 then hum:Move(flatMoveDir.Unit, false) end
+
 	else
 		hum.AutoRotate = true; root.AssemblyAngularVelocity = Vector3.zero
 	end
@@ -1152,7 +1150,7 @@ task.spawn(function() while task.wait(5) do saveConfig() end end)
 
 local setInstaGrab,setInfJumpVisual,setAntiRagVisual,setMedusaVisual
 local setUnwalkVisual,setAntiLagVisual,setAutoSwingVisual
-local normalBox,carryBox,laggerBox,laggerCarryBox,radInput,durInput,autoTPHeightBox,batSpeedBox
+local normalBox,carryBox,laggerBox,laggerCarryBox,radInput,durInput,autoTPHeightBox
 
 local function buildGui()
 	local BG    = Color3.fromRGB(8, 8, 8)
@@ -1562,7 +1560,8 @@ local function buildGui()
 		end)
 	end
 	
-	do local row=mkRow(28);mkLabel(row,"Aimbot Speed");batSpeedBox=mkBox(row,AUTO_BAT_SPEED,45,55,function(v) if v>0 and v<=200 then AUTO_BAT_SPEED=v end;saveConfig() end) end
+	do local row=mkRow(28);mkLabel(row,"Aimbot Speed");mkBox(row,AUTO_BAT_SPEED,45,55,function(v) if v>0 and v<=200 then AUTO_BAT_SPEED=v end;saveConfig() end) end
+	do local row=mkRow(28);mkLabel(row,"Aimbot Vertical Speed");mkBox(row,AUTO_BAT_VERT_SPEED,45,55,function(v) if v>0 and v<=200 then AUTO_BAT_VERT_SPEED=v end;saveConfig() end) end
 	mkToggle("Disable at 180+",function(_) saveConfig() end)
 	setBatCounterVisual=mkToggle("Bat Counter",function(on) batCounterEnabled=on;if on then startBatCounter() else stopBatCounter() end;saveConfig() end)
 	setAutoSwingVisual=mkToggle("Auto Swing",function(on) autoSwingEnabled=on;saveConfig() end)
@@ -1771,13 +1770,8 @@ local function loadConfigState()
 	if durInput then durInput.Text=tostring(Steal.StealDuration) end
 	if progressRadLbl then progressRadLbl.Text=string.format("Radius: %.2g",Steal.StealRadius) end
 	if autoTPHeightBox then autoTPHeightBox.Text=tostring(autoTPHeight) end
-	
-	if cfg.batSpeed and cfg.batSpeed > 0 and cfg.batSpeed <= 200 then 
-		AUTO_BAT_SPEED=cfg.batSpeed 
-		if batSpeedBox then batSpeedBox.Text=tostring(AUTO_BAT_SPEED) end
-	end
 
-	-- Mobil Buton Pozisyonları Yükleme (Bug Fix için V4 key kullanıldı, eski bozuk ayarlar silinir)
+	-- Mobil Buton Pozisyonları Yükleme
 	if cfg.btnPosV4 then
 		for k, p in pairs(cfg.btnPosV4) do
 			if _mobileBtnRefs[k] and type(p) == "table" and #p == 4 then
@@ -1800,7 +1794,10 @@ local function loadConfigState()
 		if cfg.autoTPEnabled then autoTPEnabled=true;if setAutoTPVisual then setAutoTPVisual(true) end;startAutoTP() end
 		if cfg.autoSwing~=nil then autoSwingEnabled=cfg.autoSwing==true end
 		if setAutoSwingVisual then setAutoSwingVisual(autoSwingEnabled) end
+		
+		if cfg.batSpeed and cfg.batSpeed > 0 and cfg.batSpeed <= 200 then AUTO_BAT_SPEED=cfg.batSpeed end
 		if cfg.batVertSpeed and cfg.batVertSpeed > 0 and cfg.batVertSpeed <= 200 then AUTO_BAT_VERT_SPEED=cfg.batVertSpeed end
+		
 		if cfg.autoBat then autoBatEnabled=true;if autoBatSetVisual then autoBatSetVisual(true) end;queueAutoBatStart() end
 		if cfg.unwalkEnabled then unwalkEnabled=true;if setUnwalkVisual then setUnwalkVisual(true) end;task.spawn(function() task.wait(0.5);startUnwalk() end) end
 		if cfg.antiLag then enableAntiLag();if setAntiLagVisual then setAntiLagVisual(true) end end
